@@ -73,28 +73,34 @@ export type Database = {
       }
       designs: {
         Row: {
+          back_view_image_url: string | null
           category_id: string | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           title: string
+          uploaded_by: string | null
         }
         Insert: {
+          back_view_image_url?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           title: string
+          uploaded_by?: string | null
         }
         Update: {
+          back_view_image_url?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           title?: string
+          uploaded_by?: string | null
         }
         Relationships: [
           {
@@ -108,45 +114,87 @@ export type Database = {
       }
       measurements: {
         Row: {
+          ankle: number | null
+          back_width: number | null
+          bust: number | null
           chest: number | null
           created_by: string | null
           customer_id: string
           date_recorded: string
+          dress_length: number | null
           hip: number | null
           id: string
           inseam: number | null
+          knee: number | null
+          measurement_gender: string | null
           neck: number | null
+          neck_depth: number | null
+          neck_size: number | null
           notes: string | null
+          outfit_type: string | null
+          round_sleeve: number | null
+          shirt_length: number | null
           shoulder: number | null
           sleeve_length: number | null
+          thigh: number | null
+          top_length: number | null
+          trouser_length: number | null
           waist: number | null
         }
         Insert: {
+          ankle?: number | null
+          back_width?: number | null
+          bust?: number | null
           chest?: number | null
           created_by?: string | null
           customer_id: string
           date_recorded?: string
+          dress_length?: number | null
           hip?: number | null
           id?: string
           inseam?: number | null
+          knee?: number | null
+          measurement_gender?: string | null
           neck?: number | null
+          neck_depth?: number | null
+          neck_size?: number | null
           notes?: string | null
+          outfit_type?: string | null
+          round_sleeve?: number | null
+          shirt_length?: number | null
           shoulder?: number | null
           sleeve_length?: number | null
+          thigh?: number | null
+          top_length?: number | null
+          trouser_length?: number | null
           waist?: number | null
         }
         Update: {
+          ankle?: number | null
+          back_width?: number | null
+          bust?: number | null
           chest?: number | null
           created_by?: string | null
           customer_id?: string
           date_recorded?: string
+          dress_length?: number | null
           hip?: number | null
           id?: string
           inseam?: number | null
+          knee?: number | null
+          measurement_gender?: string | null
           neck?: number | null
+          neck_depth?: number | null
+          neck_size?: number | null
           notes?: string | null
+          outfit_type?: string | null
+          round_sleeve?: number | null
+          shirt_length?: number | null
           shoulder?: number | null
           sleeve_length?: number | null
+          thigh?: number | null
+          top_length?: number | null
+          trouser_length?: number | null
           waist?: number | null
         }
         Relationships: [

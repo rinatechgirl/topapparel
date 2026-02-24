@@ -9,29 +9,41 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Image as ImageIcon, RotateCcw, X, ZoomIn } from "lucide-react";
 
-interface Design { id: string; title: string; description: string | null; category_id: string | null; image_url: string | null; created_at: string; }
+interface Design {
+  id: string;
+  title: string;
+  description: string | null;
+  category_id: string | null;
+  image_url: string | null;
+  back_view_image_url: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
 interface Category { id: string; name: string; }
 
 const Designs = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", category_id: "", });
-  const [file, setFile] = useState<File | null>(null);
+  const [form, setForm] = useState({ title: "", description: "", category_id: "" });
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+  const [detailDesign, setDetailDesign] = useState<Design | null>(null);
 
   const fetchDesigns = async () => {
     let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     if (filterCategory && filterCategory !== "all") query = query.eq("category_id", filterCategory);
     const { data } = await query;
-    setDesigns(data ?? []);
+    setDesigns((data as Design[]) ?? []);
   };
 
   const fetchCategories = async () => {
@@ -42,32 +54,47 @@ const Designs = () => {
   useEffect(() => { fetchCategories(); }, []);
   useEffect(() => { fetchDesigns(); }, [search, filterCategory]);
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("design-images").upload(path, file);
+    if (error) { toast.error("Upload failed: " + error.message); return null; }
+    const { data: urlData } = supabase.storage.from("design-images").getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    let imageUrl = editingId ? designs.find(d => d.id === editingId)?.image_url ?? null : null;
+    const existing = editingId ? designs.find((d) => d.id === editingId) : null;
+    let frontUrl = existing?.image_url ?? null;
+    let backUrl = existing?.back_view_image_url ?? null;
 
-    if (file) {
-      const ext = file.name.split(".").pop();
-      const path = `${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("design-images").upload(path, file);
-      if (uploadError) { toast.error("Upload failed: " + uploadError.message); setLoading(false); return; }
-      const { data: urlData } = supabase.storage.from("design-images").getPublicUrl(path);
-      imageUrl = urlData.publicUrl;
+    if (frontFile) {
+      const url = await uploadImage(frontFile);
+      if (!url) { setLoading(false); return; }
+      frontUrl = url;
+    }
+    if (backFile) {
+      const url = await uploadImage(backFile);
+      if (!url) { setLoading(false); return; }
+      backUrl = url;
     }
 
     const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,
       category_id: form.category_id || null,
-      image_url: imageUrl,
+      image_url: frontUrl,
+      back_view_image_url: backUrl,
+      uploaded_by: existing?.uploaded_by ?? user?.id ?? null,
     };
 
     if (editingId) {
       const { error } = await supabase.from("designs").update(payload).eq("id", editingId);
       if (error) toast.error(error.message); else toast.success("Design updated");
     } else {
-      const { error } = await supabase.from("designs").insert(payload);
+      const { error } = await supabase.from("designs").insert(payload as any);
       if (error) toast.error(error.message); else toast.success("Design added");
     }
     setLoading(false);
@@ -76,7 +103,12 @@ const Designs = () => {
     fetchDesigns();
   };
 
-  const resetForm = () => { setEditingId(null); setForm({ title: "", description: "", category_id: "" }); setFile(null); };
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ title: "", description: "", category_id: "" });
+    setFrontFile(null);
+    setBackFile(null);
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this design?")) return;
@@ -84,7 +116,16 @@ const Designs = () => {
     if (error) toast.error(error.message); else { toast.success("Deleted"); fetchDesigns(); }
   };
 
-  const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name ?? "Uncategorized";
+  const toggleFlip = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFlippedCards((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const getCategoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "Uncategorized";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -112,9 +153,15 @@ const Designs = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Image</Label>
-                  <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Front View Image</Label>
+                    <Input type="file" accept="image/*" onChange={(e) => setFrontFile(e.target.files?.[0] ?? null)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Back View Image</Label>
+                    <Input type="file" accept="image/*" onChange={(e) => setBackFile(e.target.files?.[0] ?? null)} />
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>{loading ? "Saving..." : "Save"}</Button>
               </form>
@@ -141,30 +188,109 @@ const Designs = () => {
         <Card><CardContent className="py-12 text-center text-muted-foreground">No designs found.</CardContent></Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {designs.map((d) => (
-            <Card key={d.id} className="shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-              <div className="aspect-[4/5] bg-secondary relative">
-                {d.image_url ? (
-                  <img src={d.image_url} alt={d.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>
-                )}
-                {isAdmin && (
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => { setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
-                    <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => handleDelete(d.id)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+          {designs.map((d) => {
+            const isFlipped = flippedCards.has(d.id);
+            const frontImg = d.image_url;
+            const backImg = d.back_view_image_url;
+            return (
+              <Card
+                key={d.id}
+                className="shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer"
+                onClick={() => setDetailDesign(d)}
+              >
+                <div className="aspect-[4/5] bg-secondary relative overflow-hidden">
+                  {/* Front view */}
+                  <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-0" : "opacity-100"}`}>
+                    {frontImg ? (
+                      <img src={frontImg} alt={`${d.title} - Front`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>
+                    )}
                   </div>
-                )}
-              </div>
-              <CardContent className="p-4">
-                <p className="font-medium text-foreground text-sm">{d.title}</p>
-                <p className="text-xs text-accent mt-1">{getCategoryName(d.category_id)}</p>
-                {d.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-              </CardContent>
-            </Card>
-          ))}
+                  {/* Back view */}
+                  <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-100" : "opacity-0"}`}>
+                    {backImg ? (
+                      <img src={backImg} alt={`${d.title} - Back`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center flex-col gap-2">
+                        <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
+                        <span className="text-xs text-muted-foreground/50">No back view</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Flip toggle */}
+                  {(frontImg || backImg) && (
+                    <button
+                      onClick={(e) => toggleFlip(d.id, e)}
+                      className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title={isFlipped ? "Show front" : "Show back"}
+                    >
+                      <RotateCcw className="w-4 h-4 text-foreground" />
+                    </button>
+                  )}
+
+                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-background/70 backdrop-blur-sm text-foreground px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isFlipped ? "Back" : "Front"}
+                  </span>
+
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-4">
+                  <p className="font-medium text-foreground text-sm">{d.title}</p>
+                  <p className="text-xs text-accent mt-1">{getCategoryName(d.category_id)}</p>
+                  {d.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      {/* Detail Modal */}
+      <Dialog open={!!detailDesign} onOpenChange={(o) => { if (!o) setDetailDesign(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          {detailDesign && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-lg">{detailDesign.title}</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground">Front View</p>
+                  <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
+                    {detailDesign.image_url ? (
+                      <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground">Back View</p>
+                  <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
+                    {detailDesign.back_view_image_url ? (
+                      <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-muted-foreground"><span className="font-semibold">Category:</span> {getCategoryName(detailDesign.category_id)}</p>
+                {detailDesign.description && <p className="text-sm text-foreground">{detailDesign.description}</p>}
+                <p className="text-xs text-muted-foreground">Added: {new Date(detailDesign.created_at).toLocaleDateString()}</p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

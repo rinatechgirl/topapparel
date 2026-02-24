@@ -4,9 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Phone, Mail, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import MeasurementForm from "@/components/MeasurementForm";
+
+const DISPLAY_FIELDS: Record<string, string> = {
+  chest: "Chest", bust: "Bust", waist: "Waist", hip: "Hip", shoulder: "Shoulder",
+  sleeve_length: "Sleeve Length", neck: "Neck", inseam: "Inseam",
+  dress_length: "Dress Length", round_sleeve: "Round Sleeve", neck_depth: "Neck Depth",
+  back_width: "Back Width", thigh: "Thigh", knee: "Knee", ankle: "Ankle",
+  trouser_length: "Trouser Length", top_length: "Top Length", shirt_length: "Shirt Length",
+  neck_size: "Neck Size",
+};
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -27,8 +37,6 @@ const CustomerDetail = () => {
   useEffect(() => { if (id) load(); }, [id]);
 
   if (!customer) return <div className="p-6 text-muted-foreground">Loading...</div>;
-
-  const fields = ["chest", "waist", "hip", "shoulder", "sleeve_length", "neck", "inseam"] as const;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -69,8 +77,12 @@ const CustomerDetail = () => {
           {measurements.map((m) => (
             <Card key={m.id} className="shadow-sm">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-muted-foreground">{format(new Date(m.date_recorded), "MMM d, yyyy")}</span>
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{format(new Date(m.date_recorded), "MMM d, yyyy")}</span>
+                    {m.outfit_type && <Badge variant="secondary" className="text-[10px]">{m.outfit_type}</Badge>}
+                    {m.measurement_gender && <Badge variant="outline" className="text-[10px]">{m.measurement_gender}</Badge>}
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => { setEditingMeasurement(m); setShowForm(true); }}>Edit</Button>
                     {isAdmin && (
@@ -82,12 +94,14 @@ const CustomerDetail = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {fields.map((f) => m[f] != null && (
-                    <div key={f}>
-                      <p className="text-xs text-muted-foreground capitalize">{f.replace("_", " ")}</p>
-                      <p className="text-sm font-medium text-foreground">{m[f]} cm</p>
-                    </div>
-                  ))}
+                  {Object.entries(DISPLAY_FIELDS).map(([key, label]) =>
+                    m[key] != null ? (
+                      <div key={key}>
+                        <p className="text-xs text-muted-foreground">{label}</p>
+                        <p className="text-sm font-medium text-foreground">{m[key]} cm</p>
+                      </div>
+                    ) : null
+                  )}
                 </div>
                 {m.notes && <p className="text-xs text-muted-foreground mt-3 italic">{m.notes}</p>}
               </CardContent>
