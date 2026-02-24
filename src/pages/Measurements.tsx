@@ -90,14 +90,14 @@ const Measurements = () => {
                     Object.entries(m.measurement_data).map(([k, v]) => (
                       <div key={k}>
                         <p className="text-xs text-muted-foreground capitalize">{k.replace(/_/g, " ")}</p>
-                        <p className="text-sm font-medium text-foreground">{String(v)} cm</p>
+                        <p className="text-sm font-medium text-foreground">{String(v)} {m.unit || "cm"}</p>
                       </div>
                     ))
                   ) : (
                     fields.map((f) => m[f] != null && (
                       <div key={f}>
                         <p className="text-xs text-muted-foreground capitalize">{f.replace("_", " ")}</p>
-                        <p className="text-sm font-medium text-foreground">{m[f]} cm</p>
+                        <p className="text-sm font-medium text-foreground">{m[f]} {m.unit || "cm"}</p>
                       </div>
                     ))
                   )}

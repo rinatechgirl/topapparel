@@ -19,6 +19,7 @@ interface Design {
   image_url: string | null;
   back_view_image_url: string | null;
   uploaded_by: string | null;
+  gender: string | null;
   created_at: string;
 }
 interface Category { id: string; name: string; }
@@ -29,9 +30,10 @@ const Designs = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [filterGender, setFilterGender] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", category_id: "" });
+  const [form, setForm] = useState({ title: "", description: "", category_id: "", gender: "Unisex" });
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,7 @@ const Designs = () => {
     let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     if (filterCategory && filterCategory !== "all") query = query.eq("category_id", filterCategory);
+    if (filterGender && filterGender !== "all") query = query.eq("gender", filterGender);
     const { data } = await query;
     setDesigns((data as Design[]) ?? []);
   };
@@ -53,7 +56,7 @@ const Designs = () => {
 
   useEffect(() => { fetchCategories(); }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchDesigns(); }, [search, filterCategory]);
+  useEffect(() => { fetchDesigns(); }, [search, filterCategory, filterGender]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop();
@@ -86,6 +89,7 @@ const Designs = () => {
       title: form.title.trim(),
       description: form.description.trim() || null,
       category_id: form.category_id || null,
+      gender: form.gender,
       image_url: frontUrl,
       back_view_image_url: backUrl,
       uploaded_by: existing?.uploaded_by ?? user?.id ?? null,
@@ -95,6 +99,7 @@ const Designs = () => {
       const { error } = await supabase.from("designs").update(payload).eq("id", editingId);
       if (error) toast.error(error.message); else toast.success("Design updated");
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await supabase.from("designs").insert(payload as any);
       if (error) toast.error(error.message); else toast.success("Design added");
     }
@@ -106,7 +111,7 @@ const Designs = () => {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ title: "", description: "", category_id: "" });
+    setForm({ title: "", description: "", category_id: "", gender: "Unisex" });
     setFrontFile(null);
     setBackFile(null);
   };
@@ -121,7 +126,11 @@ const Designs = () => {
     e.stopPropagation();
     setFlippedCards((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -145,14 +154,27 @@ const Designs = () => {
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="space-y-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
                 <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Unisex">Unisex</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
@@ -176,6 +198,15 @@ const Designs = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search designs..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
+        <Select value={filterGender} onValueChange={setFilterGender}>
+          <SelectTrigger className="w-32"><SelectValue placeholder="Gender" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Genders</SelectItem>
+            <SelectItem value="Male">Male</SelectItem>
+            <SelectItem value="Female">Female</SelectItem>
+            <SelectItem value="Unisex">Unisex</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
           <SelectTrigger className="w-48"><SelectValue placeholder="All categories" /></SelectTrigger>
           <SelectContent>
@@ -237,14 +268,17 @@ const Designs = () => {
 
                   {isAdmin && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "", gender: d.gender ?? "Unisex" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
                       <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
                     </div>
                   )}
                 </div>
                 <CardContent className="p-4">
                   <p className="font-medium text-foreground text-sm">{d.title}</p>
-                  <p className="text-xs text-accent mt-1">{getCategoryName(d.category_id)}</p>
+                  <div className="flex gap-2 items-center mt-1">
+                    <p className="text-xs text-accent">{getCategoryName(d.category_id)}</p>
+                    {d.gender && <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full">{d.gender}</span>}
+                  </div>
                   {d.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
                 </CardContent>
               </Card>
@@ -285,6 +319,7 @@ const Designs = () => {
               </div>
               <div className="space-y-2 mt-2">
                 <p className="text-xs text-muted-foreground"><span className="font-semibold">Category:</span> {getCategoryName(detailDesign.category_id)}</p>
+                {detailDesign.gender && <p className="text-xs text-muted-foreground"><span className="font-semibold">Gender:</span> {detailDesign.gender}</p>}
                 {detailDesign.description && <p className="text-sm text-foreground">{detailDesign.description}</p>}
                 <p className="text-xs text-muted-foreground">Added: {new Date(detailDesign.created_at).toLocaleDateString()}</p>
               </div>

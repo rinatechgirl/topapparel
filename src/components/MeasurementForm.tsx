@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,41 +18,125 @@ interface Props {
   onSaved: () => void;
 }
 
-const fields = [
-  { key: "chest", label: "Chest" },
-  { key: "waist", label: "Waist" },
-  { key: "hip", label: "Hip" },
-  { key: "shoulder", label: "Shoulder" },
-  { key: "sleeve_length", label: "Sleeve Length" },
-  { key: "neck", label: "Neck" },
-  { key: "inseam", label: "Inseam" },
-] as const;
+const OUTFIT_TYPES = [
+  "Short Gown", "Long Gown", "Top / Blouse", "Trousers", "Skirt",
+  "Shirt", "Suit", "Native Wear", "Two-Piece Set", "Custom"
+];
+const GENDERS = ["Male", "Female", "Unisex"];
+const UNITS = ["cm", "inches"];
+
+const OUTFIT_SCHEMAS: Record<string, { key: string, label: string }[]> = {
+  "Short Gown": [
+    { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "gown_length_short", label: "Gown Length (Short)" }, { key: "armhole", label: "Armhole" },
+    { key: "neck_circumference", label: "Neck Circumference" }
+  ],
+  "Long Gown": [
+    { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "full_length", label: "Full Length" }, { key: "armhole", label: "Armhole" },
+    { key: "neck_depth", label: "Neck Depth" }
+  ],
+  "Top / Blouse": [
+    { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "shoulder", label: "Shoulder" },
+    { key: "sleeve_length", label: "Sleeve Length" }, { key: "top_length", label: "Top Length" },
+    { key: "armhole", label: "Armhole" }
+  ],
+  "Trousers": [
+    { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" }, { key: "thigh", label: "Thigh" },
+    { key: "knee", label: "Knee" }, { key: "ankle", label: "Ankle" }, { key: "trouser_length", label: "Trouser Length" },
+    { key: "crotch_depth", label: "Crotch Depth" }
+  ],
+  "Skirt": [
+    { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" }, { key: "skirt_length", label: "Skirt Length" }
+  ],
+  "Shirt": [
+    { key: "chest", label: "Chest" }, { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "shirt_length", label: "Shirt Length" }, { key: "neck", label: "Neck" }, { key: "armhole", label: "Armhole" }
+  ],
+  "Suit": [
+    { key: "chest", label: "Chest" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" }, { key: "suit_length", label: "Suit Length" }
+  ],
+  "Native Wear": [
+    { key: "chest", label: "Chest / Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "top_length", label: "Top Length" }, { key: "trouser_length", label: "Trouser Length" }
+  ],
+  "Two-Piece Set": [
+    { key: "bust", label: "Bust / Chest" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "top_length", label: "Top Length" }, { key: "trouser_length", label: "Trouser/Skirt Length" }
+  ],
+  "Custom": [
+    { key: "chest", label: "Chest / Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "length", label: "Overall Length" }, { key: "neck", label: "Neck" }, { key: "inseam", label: "Inseam" }
+  ]
+};
 
 const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) => {
   const { user } = useAuth();
-  const [form, setForm] = useState(() => {
-    const initial: Record<string, string> = { notes: measurement?.notes ?? "" };
-    fields.forEach((f) => { initial[f.key] = measurement?.[f.key]?.toString() ?? ""; });
+
+  const [outfitType, setOutfitType] = useState<string>(measurement?.outfit_type || "Shirt");
+  const [gender, setGender] = useState<string>(measurement?.gender || "Unisex");
+  const [unit, setUnit] = useState<string>(measurement?.unit || "cm");
+  const [notes, setNotes] = useState<string>(measurement?.notes || "");
+
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    if (measurement?.measurement_data) {
+      Object.entries(measurement.measurement_data).forEach(([k, v]) => {
+        initial[k] = String(v);
+      });
+    } else if (measurement) {
+      const currentFields = OUTFIT_SCHEMAS[measurement.outfit_type || "Custom"] || OUTFIT_SCHEMAS["Custom"];
+      currentFields.forEach(f => {
+        if (measurement[f.key]) initial[f.key] = String(measurement[f.key]);
+      });
+    }
     return initial;
   });
+
   const [loading, setLoading] = useState(false);
+
+  const currentFields = OUTFIT_SCHEMAS[outfitType] || OUTFIT_SCHEMAS["Custom"];
+
+  const handleFieldChange = (key: string, value: string) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!outfitType) { toast.error("Please select an outfit type"); return; }
-    if (!gender) { toast.error("Please select gender"); return; }
+    if (!gender || !outfitType) {
+      toast.error("Please fill gender and outfit type"); return;
+    }
+
     setLoading(true);
 
-    const payload: Record<string, any> = { customer_id: customerId, notes: form.notes || null };
-    for (const f of fields) {
-      const val = parseFloat(form[f.key]);
-      if (form[f.key] && (isNaN(val) || val < 0)) {
-        toast.error(`${f.label} must be a positive number`);
-        setLoading(false);
-        return;
+    const measurement_data: Record<string, number> = {};
+    for (const f of currentFields) {
+      const rawVal = formData[f.key];
+      if (rawVal) {
+        const val = parseFloat(rawVal);
+        if (isNaN(val) || val < 0) {
+          toast.error(`${f.label} must be a positive number`);
+          setLoading(false);
+          return;
+        }
+        measurement_data[f.key] = val;
       }
-      payload[f.key] = form[f.key] ? val : null;
     }
+
+    const payload = {
+      customer_id: customerId,
+      outfit_type: outfitType,
+      gender,
+      unit,
+      measurement_data: measurement_data as Json,
+      notes: notes || null
+    };
 
     if (measurement) {
       const { error } = await supabase.from("measurements").update(payload).eq("id", measurement.id);
@@ -68,28 +152,69 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
 
   return (
     <Card className="shadow-sm border-accent/30 max-h-[90vh] overflow-y-auto w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="font-display text-base">{measurement ? "Edit Measurement" : "New Measurement"}</CardTitle>
+      <CardHeader className="pb-3 border-b">
+        <CardTitle className="font-display text-lg">{measurement ? "Edit Measurement" : "New Measurement"}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {fields.map((f) => (
-              <div key={f.key} className="space-y-1">
-                <Label className="text-xs">{f.label} (cm)</Label>
-                <Input type="number" step="0.1" min="0" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Notes</Label>
-            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+      <CardContent className="pt-5">
+        <form onSubmit={handleSave} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Gender *</Label>
+              <Select value={gender} onValueChange={(val) => setGender(val)}>
+                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                <SelectContent>
+                  {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Outfit Type *</Label>
+              <Select value={outfitType} onValueChange={(val) => setOutfitType(val)}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  {OUTFIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Measurement Unit</Label>
+              <Select value={unit} onValueChange={(val) => setUnit(val)}>
+                <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
+                <SelectContent>
+                  {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <Button type="submit" disabled={loading} size="sm">{loading ? "Saving..." : "Save"}</Button>
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <div className="py-4 border-t border-border">
+            <Label className="text-base font-semibold text-foreground mb-4 block">Dimensions ({unit})</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {currentFields.map((f) => {
+                let displayLabel = f.label;
+                if (f.key === "chest" || f.key === "bust") {
+                  displayLabel = gender === "Female" ? "Bust" : gender === "Male" ? "Chest" : f.label;
+                }
+                return (
+                  <div key={f.key} className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">{displayLabel}</Label>
+                    <Input type="number" step="0.1" min="0" value={formData[f.key] || ""} onChange={(e) => handleFieldChange(f.key, e.target.value)} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-border">
+            <Label className="text-sm font-medium">Additional Notes</Label>
+            <Textarea placeholder="Any specific adjustments, preferences, or observations..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Measurement"}</Button>
           </div>
         </form>
       </CardContent>

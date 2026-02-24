@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StatCard from "@/components/StatCard";
-import { Users, Palette, FolderOpen, Ruler } from "lucide-react";
+import { Users, Palette, FolderOpen, Ruler, PlusCircle, FileText, UserPlus, ImagePlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const CHART_COLORS = [
   "hsl(var(--primary))",
@@ -103,6 +105,24 @@ const Dashboard = () => {
         <StatCard title="Categories" value={stats.categories} icon={FolderOpen} />
         <StatCard title="Measurements" value={stats.measurements} icon={Ruler} />
       </div>
+
+      {/* Quick Actions */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-lg">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-4">
+          <Button asChild className="gap-2">
+            <Link to="/customers"><UserPlus className="w-4 h-4" /> Add Customer</Link>
+          </Button>
+          <Button asChild variant="secondary" className="gap-2">
+            <Link to="/measurements"><FileText className="w-4 h-4" /> Add Measurement</Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/designs"><ImagePlus className="w-4 h-4" /> Add Design</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

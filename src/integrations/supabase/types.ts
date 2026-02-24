@@ -83,6 +83,7 @@ export type Database = {
           back_view_image_url: string | null
           title: string
           uploaded_by: string | null
+          gender: string | null
         }
         Insert: {
           back_view_image_url?: string | null
@@ -95,6 +96,7 @@ export type Database = {
           back_view_image_url?: string | null
           title: string
           uploaded_by?: string | null
+          gender?: string | null
         }
         Update: {
           back_view_image_url?: string | null
@@ -107,6 +109,7 @@ export type Database = {
           back_view_image_url?: string | null
           title?: string
           uploaded_by?: string | null
+          gender?: string | null
         }
         Relationships: [
           {
@@ -140,6 +143,10 @@ export type Database = {
           top_length: number | null
           trouser_length: number | null
           waist: number | null
+          gender: string | null
+          outfit_type: string | null
+          measurement_data: Json | null
+          unit: string | null
         }
         Insert: {
           ankle?: number | null
@@ -162,6 +169,10 @@ export type Database = {
           top_length?: number | null
           trouser_length?: number | null
           waist?: number | null
+          gender?: string | null
+          outfit_type?: string | null
+          measurement_data?: Json | null
+          unit?: string | null
         }
         Update: {
           ankle?: number | null
@@ -184,6 +195,10 @@ export type Database = {
           top_length?: number | null
           trouser_length?: number | null
           waist?: number | null
+          gender?: string | null
+          outfit_type?: string | null
+          measurement_data?: Json | null
+          unit?: string | null
         }
         Relationships: [
           {

@@ -85,7 +85,7 @@ const CustomerDetail = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{format(new Date(m.date_recorded), "MMM d, yyyy")}</span>
                     {m.outfit_type && <Badge variant="secondary" className="text-[10px]">{m.outfit_type}</Badge>}
-                    {m.measurement_gender && <Badge variant="outline" className="text-[10px]">{m.measurement_gender}</Badge>}
+                    {m.gender && <Badge variant="outline" className="text-[10px]">{m.gender}</Badge>}
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => { setEditingMeasurement(m); setShowForm(true); }}>Edit</Button>
@@ -98,13 +98,22 @@ const CustomerDetail = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {Object.entries(DISPLAY_FIELDS).map(([key, label]) =>
-                    m[key] != null ? (
-                      <div key={key}>
-                        <p className="text-xs text-muted-foreground">{label}</p>
-                        <p className="text-sm font-medium text-foreground">{m[key]} cm</p>
+                  {m.measurement_data ? (
+                    Object.entries(m.measurement_data).map(([k, v]) => (
+                      <div key={k}>
+                        <p className="text-xs text-muted-foreground capitalize">{k.replace(/_/g, " ")}</p>
+                        <p className="text-sm font-medium text-foreground">{String(v)} {m.unit || "cm"}</p>
                       </div>
-                    ) : null
+                    ))
+                  ) : (
+                    Object.entries(DISPLAY_FIELDS).map(([key, label]) =>
+                      m[key] != null ? (
+                        <div key={key}>
+                          <p className="text-xs text-muted-foreground">{label}</p>
+                          <p className="text-sm font-medium text-foreground">{m[key]} {m.unit || "cm"}</p>
+                        </div>
+                      ) : null
+                    )
                   )}
                 </div>
                 {m.notes && <p className="text-xs text-muted-foreground mt-3 italic">{m.notes}</p>}
