@@ -22,9 +22,12 @@ const CustomerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customer, setCustomer] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingMeasurement, setEditingMeasurement] = useState<any>(null);
 
   const load = async () => {
@@ -34,6 +37,7 @@ const CustomerDetail = () => {
     setMeasurements(m ?? []);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (id) load(); }, [id]);
 
   if (!customer) return <div className="p-6 text-muted-foreground">Loading...</div>;

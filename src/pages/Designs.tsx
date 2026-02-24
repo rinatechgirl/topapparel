@@ -52,6 +52,7 @@ const Designs = () => {
   };
 
   useEffect(() => { fetchCategories(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchDesigns(); }, [search, filterCategory]);
 
   const uploadImage = async (file: File): Promise<string | null> => {

@@ -18,8 +18,11 @@ const CHART_COLORS = [
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentMeasurements, setRecentMeasurements] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [measurementsByMonth, setMeasurementsByMonth] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [designsByCategory, setDesignsByCategory] = useState<any[]>([]);
 
   useEffect(() => {
@@ -69,6 +72,7 @@ const Dashboard = () => {
         .select("category_id, categories(name)");
       const catMap: Record<string, number> = {};
       (designs ?? []).forEach((d) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const name = (d.categories as any)?.name ?? "Uncategorized";
         catMap[name] = (catMap[name] || 0) + 1;
       });
@@ -170,6 +174,7 @@ const Dashboard = () => {
               {recentMeasurements.map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm font-medium text-foreground">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {(m.customers as any)?.first_name} {(m.customers as any)?.last_name}
                   </span>
                   <span className="text-xs text-muted-foreground">

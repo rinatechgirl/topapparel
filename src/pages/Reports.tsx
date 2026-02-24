@@ -22,7 +22,7 @@ const Reports = () => {
   }, []);
 
   const exportCSV = async (table: string) => {
-    const { data } = await supabase.from(table as any).select("*");
+    const { data } = await supabase.from(table as "customers" | "designs" | "categories" | "measurements").select("*");
     if (!data || data.length === 0) return;
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map((r) => Object.values(r).map((v) => `"${v ?? ""}"`).join(",")).join("\n");

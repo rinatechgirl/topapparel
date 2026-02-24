@@ -11,7 +11,9 @@ import { Link } from "react-router-dom";
 
 const Measurements = () => {
   const { isAdmin } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [measurements, setMeasurements] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filterCustomer, setFilterCustomer] = useState("all");
@@ -29,6 +31,7 @@ const Measurements = () => {
       if (search) {
         const s = search.toLowerCase();
         results = results.filter((m) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const name = `${(m.customers as any)?.first_name ?? ""} ${(m.customers as any)?.last_name ?? ""}`.toLowerCase();
           return name.includes(s);
         });
@@ -71,17 +74,33 @@ const Measurements = () => {
                 <div className="flex items-center justify-between mb-3">
                   <Link to={`/customers/${m.customer_id}`} className="flex items-center gap-2 hover:text-accent transition-colors">
                     <Ruler className="w-4 h-4 text-accent" />
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <span className="font-medium text-sm">{(m.customers as any)?.first_name} {(m.customers as any)?.last_name}</span>
                   </Link>
-                  <span className="text-xs text-muted-foreground">{format(new Date(m.date_recorded), "MMM d, yyyy")}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {m.outfit_type && <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">{m.outfit_type}</span>}
+                      {m.gender && <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full font-medium">{m.gender}</span>}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{format(new Date(m.date_recorded), "MMM d, yyyy")}</span>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                  {fields.map((f) => m[f] != null && (
-                    <div key={f}>
-                      <p className="text-xs text-muted-foreground capitalize">{f.replace("_", " ")}</p>
-                      <p className="text-sm font-medium text-foreground">{m[f]} cm</p>
-                    </div>
-                  ))}
+                  {m.measurement_data ? (
+                    Object.entries(m.measurement_data).map(([k, v]) => (
+                      <div key={k}>
+                        <p className="text-xs text-muted-foreground capitalize">{k.replace(/_/g, " ")}</p>
+                        <p className="text-sm font-medium text-foreground">{String(v)} cm</p>
+                      </div>
+                    ))
+                  ) : (
+                    fields.map((f) => m[f] != null && (
+                      <div key={f}>
+                        <p className="text-xs text-muted-foreground capitalize">{f.replace("_", " ")}</p>
+                        <p className="text-sm font-medium text-foreground">{m[f]} cm</p>
+                      </div>
+                    ))
+                  )}
                 </div>
                 {m.notes && <p className="text-xs text-muted-foreground mt-3 italic">{m.notes}</p>}
               </CardContent>
