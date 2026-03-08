@@ -9,6 +9,12 @@ interface TenantInfo {
   business_name: string;
   slug: string;
   status: string;
+  business_email?: string;
+  owner_name?: string;
+  phone?: string | null;
+  address?: string | null;
+  country?: string | null;
+  description?: string | null;
 }
 
 interface AuthContextType {
@@ -47,6 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
   const fetchUserContext = async (userId: string) => {
+    // Try to accept any pending invitation first
+    await supabase.rpc("accept_pending_invitation");
+
     // Fetch role
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -75,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (tid) {
       const { data: tenantData } = await supabase
         .from("tenants")
-        .select("id, business_name, slug, status")
+        .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
         .eq("id", tid)
         .maybeSingle();
       setTenant(tenantData as TenantInfo | null);

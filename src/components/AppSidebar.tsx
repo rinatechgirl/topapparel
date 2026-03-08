@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, Users, Ruler, Palette, FolderOpen, BarChart3,
-  LogOut, Scissors, X, Shield,
+  LogOut, Scissors, X, Shield, Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 const platformAdminItems = [
