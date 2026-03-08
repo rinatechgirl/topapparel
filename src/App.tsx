@@ -19,6 +19,7 @@ import TenantRegister from "@/pages/TenantRegister";
 import PendingApproval from "@/pages/PendingApproval";
 import AdminPanel from "@/pages/AdminPanel";
 import OrganizationSettings from "@/pages/OrganizationSettings";
+import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
 
