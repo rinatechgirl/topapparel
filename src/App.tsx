@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   const { user, loading, isAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
