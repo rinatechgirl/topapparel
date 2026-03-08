@@ -65,10 +65,10 @@ const TenantRegister = () => {
 
     if (profileErr) { toast.error(profileErr.message); setLoading(false); return; }
 
-    // Create user_role as admin for this tenant
+    // Create or update user_role as admin for this tenant
     const { error: roleErr } = await supabase
       .from("user_roles")
-      .insert({ user_id: user.id, role: "admin", tenant_id: tenant.id } as any);
+      .upsert({ user_id: user.id, role: "admin", tenant_id: tenant.id } as any, { onConflict: "user_id,role" });
 
     if (roleErr) { toast.error(roleErr.message); setLoading(false); return; }
 
