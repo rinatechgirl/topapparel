@@ -35,7 +35,7 @@ const TenantRegister = () => {
     const slug = slugify(form.business_name);
     if (!slug) { toast.error("Invalid business name"); setLoading(false); return; }
 
-    // Create tenant
+    // Create tenant - don't use .select() since RLS SELECT requires tenant assignment
     const { data: tenant, error: tenantErr } = await supabase
       .from("tenants")
       .insert({
@@ -50,6 +50,24 @@ const TenantRegister = () => {
       } as any)
       .select("id")
       .single();
+
+    // If RLS blocks the select, try fetching by slug instead
+    let tenantId = tenant?.id;
+    if (tenantErr) {
+      // Try to find the tenant we just created by slug
+      const { data: found } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (found) {
+        tenantId = found.id;
+      } else {
+        toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
+        setLoading(false);
+        return;
+      }
+    }
 
     if (tenantErr) {
       toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
