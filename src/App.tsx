@@ -18,6 +18,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import TenantRegister from "@/pages/TenantRegister";
 import PendingApproval from "@/pages/PendingApproval";
 import AdminPanel from "@/pages/AdminPanel";
+import OrganizationSettings from "@/pages/OrganizationSettings";
 
 const queryClient = new QueryClient();
 
