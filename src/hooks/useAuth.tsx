@@ -47,6 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
   const fetchUserContext = async (userId: string) => {
+    // Try to accept any pending invitation first
+    await supabase.rpc("accept_pending_invitation");
+
     // Fetch role
     const { data: roleData } = await supabase
       .from("user_roles")
