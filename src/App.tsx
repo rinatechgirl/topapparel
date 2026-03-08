@@ -52,7 +52,7 @@ const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isPlatformAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (!isPlatformAdmin) return <Navigate to="/" replace />;
+  if (!isPlatformAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
