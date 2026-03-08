@@ -65,8 +65,8 @@ const Auth = () => {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
             <Scissors className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground">FashionDesk</h1>
-          <p className="text-muted-foreground mt-1 font-body">Catalogue & Measurement System</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Rina's Fit</h1>
+          <p className="text-muted-foreground mt-1 font-body">Fashion Management Platform</p>
         </div>
 
         <Card className="shadow-lg border-border/50">
@@ -75,7 +75,7 @@ const Auth = () => {
               {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
             </CardTitle>
             <CardDescription>
-              {isForgot ? "Enter your email to receive a reset link" : isLogin ? "Sign in to your account" : "Get started with FashionDesk"}
+              {isForgot ? "Enter your email to receive a reset link" : isLogin ? "Sign in to your account" : "Get started with Rina's Fit"}
             </CardDescription>
           </CardHeader>
           <CardContent>
