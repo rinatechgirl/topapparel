@@ -34,7 +34,7 @@ const AdminPanel = () => {
   const fetchTenants = async () => {
     setLoading(true);
     let query = supabase.from("tenants").select("*").order("created_at", { ascending: false });
-    if (filter !== "all") query = query.eq("status", filter);
+    if (filter !== "all") query = query.eq("status", filter as any);
     const { data, error } = await query;
     if (error) toast.error(error.message);
     setTenants((data as Tenant[]) ?? []);

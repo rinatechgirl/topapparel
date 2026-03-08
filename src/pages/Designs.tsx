@@ -44,7 +44,12 @@ const Designs = () => {
     let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     if (filterCategory && filterCategory !== "all") query = query.eq("category_id", filterCategory);
-    if (filterGender && filterGender !== "all") query = query.eq("gender" as any, filterGender);
+    if (filterGender && filterGender !== "all") {
+      const { data: allData } = await query;
+      const filtered = (allData ?? []).filter((d: any) => d.gender === filterGender);
+      setDesigns(filtered as Design[]);
+      return;
+    }
     const { data } = await query;
     setDesigns((data as Design[]) ?? []);
   };
