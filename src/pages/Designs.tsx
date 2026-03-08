@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Image as ImageIcon, RotateCcw, X, ZoomIn } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Image as ImageIcon, RotateCcw } from "lucide-react";
 
 interface Design {
   id: string;
@@ -25,7 +25,7 @@ interface Design {
 interface Category { id: string; name: string; }
 
 const Designs = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, tenantId } = useAuth();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
@@ -44,7 +44,7 @@ const Designs = () => {
     let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     if (filterCategory && filterCategory !== "all") query = query.eq("category_id", filterCategory);
-    if (filterGender && filterGender !== "all") query = query.eq("gender", filterGender);
+    if (filterGender && filterGender !== "all") query = query.eq("gender" as any, filterGender);
     const { data } = await query;
     setDesigns((data as Design[]) ?? []);
   };
@@ -85,7 +85,7 @@ const Designs = () => {
       backUrl = url;
     }
 
-    const payload = {
+    const payload: any = {
       title: form.title.trim(),
       description: form.description.trim() || null,
       category_id: form.category_id || null,
@@ -93,14 +93,14 @@ const Designs = () => {
       image_url: frontUrl,
       back_view_image_url: backUrl,
       uploaded_by: existing?.uploaded_by ?? user?.id ?? null,
+      tenant_id: tenantId,
     };
 
     if (editingId) {
       const { error } = await supabase.from("designs").update(payload).eq("id", editingId);
       if (error) toast.error(error.message); else toast.success("Design updated");
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from("designs").insert(payload as any);
+      const { error } = await supabase.from("designs").insert(payload);
       if (error) toast.error(error.message); else toast.success("Design added");
     }
     setLoading(false);
@@ -126,11 +126,7 @@ const Designs = () => {
     e.stopPropagation();
     setFlippedCards((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
@@ -167,7 +163,7 @@ const Designs = () => {
                   <div className="space-y-2">
                     <Label>Gender</Label>
                     <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
@@ -222,50 +218,21 @@ const Designs = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {designs.map((d) => {
             const isFlipped = flippedCards.has(d.id);
-            const frontImg = d.image_url;
-            const backImg = d.back_view_image_url;
             return (
-              <Card
-                key={d.id}
-                className="shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer"
-                onClick={() => setDetailDesign(d)}
-              >
+              <Card key={d.id} className="shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer" onClick={() => setDetailDesign(d)}>
                 <div className="aspect-[4/5] bg-secondary relative overflow-hidden">
-                  {/* Front view */}
                   <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-0" : "opacity-100"}`}>
-                    {frontImg ? (
-                      <img src={frontImg} alt={`${d.title} - Front`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>
-                    )}
+                    {d.image_url ? <img src={d.image_url} alt={`${d.title} - Front`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>}
                   </div>
-                  {/* Back view */}
                   <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-100" : "opacity-0"}`}>
-                    {backImg ? (
-                      <img src={backImg} alt={`${d.title} - Back`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center flex-col gap-2">
-                        <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
-                        <span className="text-xs text-muted-foreground/50">No back view</span>
-                      </div>
-                    )}
+                    {d.back_view_image_url ? <img src={d.back_view_image_url} alt={`${d.title} - Back`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center flex-col gap-2"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /><span className="text-xs text-muted-foreground/50">No back view</span></div>}
                   </div>
-
-                  {/* Flip toggle */}
-                  {(frontImg || backImg) && (
-                    <button
-                      onClick={(e) => toggleFlip(d.id, e)}
-                      className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title={isFlipped ? "Show front" : "Show back"}
-                    >
+                  {(d.image_url || d.back_view_image_url) && (
+                    <button onClick={(e) => toggleFlip(d.id, e)} className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" title={isFlipped ? "Show front" : "Show back"}>
                       <RotateCcw className="w-4 h-4 text-foreground" />
                     </button>
                   )}
-
-                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-background/70 backdrop-blur-sm text-foreground px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isFlipped ? "Back" : "Front"}
-                  </span>
-
+                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-background/70 backdrop-blur-sm text-foreground px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">{isFlipped ? "Back" : "Front"}</span>
                   {isAdmin && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "", gender: d.gender ?? "Unisex" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
@@ -287,7 +254,6 @@ const Designs = () => {
         </div>
       )}
 
-      {/* Detail Modal */}
       <Dialog open={!!detailDesign} onOpenChange={(o) => { if (!o) setDetailDesign(null); }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           {detailDesign && (
@@ -299,21 +265,13 @@ const Designs = () => {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground">Front View</p>
                   <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
-                    {detailDesign.image_url ? (
-                      <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>
-                    )}
+                    {detailDesign.image_url ? <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground">Back View</p>
                   <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
-                    {detailDesign.back_view_image_url ? (
-                      <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>
-                    )}
+                    {detailDesign.back_view_image_url ? <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
               </div>

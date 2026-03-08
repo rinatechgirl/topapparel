@@ -13,7 +13,7 @@ import { Plus, Pencil, Trash2, FolderOpen } from "lucide-react";
 interface Category { id: string; name: string; description: string | null; created_at: string; }
 
 const Categories = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, tenantId } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -21,17 +21,17 @@ const Categories = () => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetch = async () => {
+  const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*").order("name");
     setCategories(data ?? []);
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const payload = { name: name.trim(), description: description.trim() || null };
+    const payload: any = { name: name.trim(), description: description.trim() || null, tenant_id: tenantId };
     if (editingId) {
       const { error } = await supabase.from("categories").update(payload).eq("id", editingId);
       if (error) toast.error(error.message); else toast.success("Category updated");
@@ -44,13 +44,13 @@ const Categories = () => {
     setEditingId(null);
     setName("");
     setDescription("");
-    fetch();
+    fetchCategories();
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this category?")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Category deleted"); fetch(); }
+    if (error) toast.error(error.message); else { toast.success("Category deleted"); fetchCategories(); }
   };
 
   return (

@@ -15,6 +15,9 @@ import Categories from "@/pages/Categories";
 import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
 import ResetPassword from "@/pages/ResetPassword";
+import TenantRegister from "@/pages/TenantRegister";
+import PendingApproval from "@/pages/PendingApproval";
+import AdminPanel from "@/pages/AdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,31 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+const TenantGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, tenantId, tenant, isPlatformAdmin } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+
+  // Platform admins viewing admin panel bypass tenant check
+  if (isPlatformAdmin) return <>{children}</>;
+
+  // No tenant assigned - redirect to register
+  if (!tenantId) return <Navigate to="/register-business" replace />;
+
+  // Tenant not approved
+  if (tenant && tenant.status !== "approved") return <Navigate to="/pending-approval" replace />;
+
+  return <>{children}</>;
+};
+
+const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isPlatformAdmin } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!isPlatformAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -43,7 +71,9 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route path="/register-business" element={<ProtectedRoute><TenantRegister /></ProtectedRoute>} />
+            <Route path="/pending-approval" element={<ProtectedRoute><PendingApproval /></ProtectedRoute>} />
+            <Route element={<TenantGuard><AppLayout /></TenantGuard>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
@@ -51,6 +81,7 @@ const App = () => (
               <Route path="/designs" element={<Designs />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/reports" element={<ProtectedRoute adminOnly><Reports /></ProtectedRoute>} />
+              <Route path="/admin" element={<PlatformAdminRoute><AdminPanel /></PlatformAdminRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

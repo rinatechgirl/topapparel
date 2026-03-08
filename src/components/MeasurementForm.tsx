@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Json } from "@/integrations/supabase/types";
 
 interface Props {
   customerId: string;
@@ -29,35 +28,34 @@ const OUTFIT_SCHEMAS: Record<string, { key: string, label: string }[]> = {
   "Short Gown": [
     { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
     { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
-    { key: "gown_length_short", label: "Gown Length (Short)" }, { key: "armhole", label: "Armhole" },
-    { key: "neck_circumference", label: "Neck Circumference" }
+    { key: "dress_length", label: "Gown Length" }, { key: "round_sleeve", label: "Round Sleeve" },
+    { key: "neck_depth", label: "Neck Depth" }, { key: "back_width", label: "Back Width" }
   ],
   "Long Gown": [
     { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
     { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
-    { key: "full_length", label: "Full Length" }, { key: "armhole", label: "Armhole" },
-    { key: "neck_depth", label: "Neck Depth" }
+    { key: "dress_length", label: "Full Length" }, { key: "round_sleeve", label: "Round Sleeve" },
+    { key: "neck_depth", label: "Neck Depth" }, { key: "back_width", label: "Back Width" }
   ],
   "Top / Blouse": [
     { key: "bust", label: "Bust" }, { key: "waist", label: "Waist" }, { key: "shoulder", label: "Shoulder" },
-    { key: "sleeve_length", label: "Sleeve Length" }, { key: "top_length", label: "Top Length" },
-    { key: "armhole", label: "Armhole" }
+    { key: "sleeve_length", label: "Sleeve Length" }, { key: "top_length", label: "Top Length" }
   ],
   "Trousers": [
     { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" }, { key: "thigh", label: "Thigh" },
-    { key: "knee", label: "Knee" }, { key: "ankle", label: "Ankle" }, { key: "trouser_length", label: "Trouser Length" },
-    { key: "crotch_depth", label: "Crotch Depth" }
+    { key: "knee", label: "Knee" }, { key: "ankle", label: "Ankle" }, { key: "trouser_length", label: "Trouser Length" }
   ],
   "Skirt": [
-    { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" }, { key: "skirt_length", label: "Skirt Length" }
+    { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" }, { key: "dress_length", label: "Skirt Length" }
   ],
   "Shirt": [
     { key: "chest", label: "Chest" }, { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
-    { key: "shirt_length", label: "Shirt Length" }, { key: "neck", label: "Neck" }, { key: "armhole", label: "Armhole" }
+    { key: "shirt_length", label: "Shirt Length" }, { key: "neck_size", label: "Neck Size" }
   ],
   "Suit": [
     { key: "chest", label: "Chest" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
-    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" }, { key: "suit_length", label: "Suit Length" }
+    { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
+    { key: "shirt_length", label: "Suit Length" }
   ],
   "Native Wear": [
     { key: "chest", label: "Chest / Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
@@ -72,35 +70,29 @@ const OUTFIT_SCHEMAS: Record<string, { key: string, label: string }[]> = {
   "Custom": [
     { key: "chest", label: "Chest / Bust" }, { key: "waist", label: "Waist" }, { key: "hip", label: "Hip" },
     { key: "shoulder", label: "Shoulder" }, { key: "sleeve_length", label: "Sleeve Length" },
-    { key: "length", label: "Overall Length" }, { key: "neck", label: "Neck" }, { key: "inseam", label: "Inseam" }
+    { key: "dress_length", label: "Overall Length" }, { key: "neck", label: "Neck" }, { key: "inseam", label: "Inseam" }
   ]
 };
 
 const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) => {
-  const { user } = useAuth();
+  const { user, tenantId } = useAuth();
 
   const [outfitType, setOutfitType] = useState<string>(measurement?.outfit_type || "Shirt");
-  const [gender, setGender] = useState<string>(measurement?.gender || "Unisex");
-  const [unit, setUnit] = useState<string>(measurement?.unit || "cm");
+  const [gender, setGender] = useState<string>(measurement?.measurement_gender || measurement?.gender || "Unisex");
   const [notes, setNotes] = useState<string>(measurement?.notes || "");
 
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    if (measurement?.measurement_data) {
-      Object.entries(measurement.measurement_data).forEach(([k, v]) => {
-        initial[k] = String(v);
-      });
-    } else if (measurement) {
+    if (measurement) {
       const currentFields = OUTFIT_SCHEMAS[measurement.outfit_type || "Custom"] || OUTFIT_SCHEMAS["Custom"];
       currentFields.forEach(f => {
-        if (measurement[f.key]) initial[f.key] = String(measurement[f.key]);
+        if (measurement[f.key] != null) initial[f.key] = String(measurement[f.key]);
       });
     }
     return initial;
   });
 
   const [loading, setLoading] = useState(false);
-
   const currentFields = OUTFIT_SCHEMAS[outfitType] || OUTFIT_SCHEMAS["Custom"];
 
   const handleFieldChange = (key: string, value: string) => {
@@ -112,10 +104,10 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
     if (!gender || !outfitType) {
       toast.error("Please fill gender and outfit type"); return;
     }
-
     setLoading(true);
 
-    const measurement_data: Record<string, number> = {};
+    // Build payload with individual columns
+    const numericData: Record<string, number | null> = {};
     for (const f of currentFields) {
       const rawVal = formData[f.key];
       if (rawVal) {
@@ -125,25 +117,24 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
           setLoading(false);
           return;
         }
-        measurement_data[f.key] = val;
+        numericData[f.key] = val;
       }
     }
 
-    const payload = {
+    const payload: any = {
       customer_id: customerId,
       outfit_type: outfitType,
-      gender,
-      unit,
-      measurement_data: measurement_data as Json,
-      notes: notes || null
+      measurement_gender: gender,
+      notes: notes || null,
+      tenant_id: tenantId,
+      ...numericData,
     };
 
     if (measurement) {
       const { error } = await supabase.from("measurements").update(payload).eq("id", measurement.id);
       if (error) toast.error(error.message); else toast.success("Measurement updated");
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from("measurements").insert([{ ...payload, created_by: user?.id } as any]);
+      const { error } = await supabase.from("measurements").insert([{ ...payload, created_by: user?.id }] as any);
       if (error) toast.error(error.message); else toast.success("Measurement added");
     }
     setLoading(false);
@@ -157,40 +148,29 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
       </CardHeader>
       <CardContent className="pt-5">
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Gender *</Label>
-              <Select value={gender} onValueChange={(val) => setGender(val)}>
+              <Select value={gender} onValueChange={setGender}>
                 <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
                 <SelectContent>
                   {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label className="text-sm font-medium">Outfit Type *</Label>
-              <Select value={outfitType} onValueChange={(val) => setOutfitType(val)}>
+              <Select value={outfitType} onValueChange={setOutfitType}>
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
                   {OUTFIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Measurement Unit</Label>
-              <Select value={unit} onValueChange={(val) => setUnit(val)}>
-                <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
-                <SelectContent>
-                  {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <div className="py-4 border-t border-border">
-            <Label className="text-base font-semibold text-foreground mb-4 block">Dimensions ({unit})</Label>
+            <Label className="text-base font-semibold text-foreground mb-4 block">Dimensions</Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {currentFields.map((f) => {
                 let displayLabel = f.label;
