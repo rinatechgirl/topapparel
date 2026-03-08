@@ -82,6 +82,7 @@ const App = () => (
               <Route path="/designs" element={<Designs />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/reports" element={<ProtectedRoute adminOnly><Reports /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute adminOnly><OrganizationSettings /></ProtectedRoute>} />
               <Route path="/admin" element={<PlatformAdminRoute><AdminPanel /></PlatformAdminRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />

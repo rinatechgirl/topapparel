@@ -21,6 +21,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 const platformAdminItems = [
