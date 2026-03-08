@@ -12,7 +12,7 @@ interface AppSidebarProps {
 }
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/customers", icon: Users, label: "Customers" },
   { to: "/measurements", icon: Ruler, label: "Measurements" },
   { to: "/designs", icon: Palette, label: "Designs" },

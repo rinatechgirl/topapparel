@@ -19,6 +19,7 @@ import TenantRegister from "@/pages/TenantRegister";
 import PendingApproval from "@/pages/PendingApproval";
 import AdminPanel from "@/pages/AdminPanel";
 import OrganizationSettings from "@/pages/OrganizationSettings";
+import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   const { user, loading, isAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -51,15 +52,22 @@ const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isPlatformAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (!isPlatformAdmin) return <Navigate to="/" replace />;
+  if (!isPlatformAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const AuthGate = () => {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <Auth />;
+};
+
+const LandingGate = () => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <Landing />;
 };
 
 const App = () => (
@@ -70,12 +78,13 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<LandingGate />} />
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/register-business" element={<ProtectedRoute><TenantRegister /></ProtectedRoute>} />
             <Route path="/pending-approval" element={<ProtectedRoute><PendingApproval /></ProtectedRoute>} />
             <Route element={<TenantGuard><AppLayout /></TenantGuard>}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
