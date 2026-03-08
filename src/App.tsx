@@ -59,8 +59,15 @@ const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
 const AuthGate = () => {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <Auth />;
+};
+
+const LandingGate = () => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <Landing />;
 };
 
 const App = () => (
