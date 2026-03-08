@@ -56,7 +56,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
               <Scissors className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <span className="font-display font-bold text-lg text-sidebar-foreground block leading-tight">Rina's Fit</span>
+              <span className="font-display font-bold text-lg text-sidebar-foreground block leading-tight">FashionDesk</span>
               {tenant && (
                 <span className="text-[10px] text-sidebar-foreground/50 truncate block">{tenant.business_name}</span>
               )}

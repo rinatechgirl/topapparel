@@ -104,7 +104,7 @@ const TenantRegister = () => {
             <Building2 className="w-7 h-7 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground">Register Your Business</h1>
-          <p className="text-muted-foreground mt-1 font-body">Create your organization on Rina's Fit</p>
+          <p className="text-muted-foreground mt-1 font-body">Create your organization on FashionDesk</p>
         </div>
 
         <Card className="shadow-lg border-border/50">
