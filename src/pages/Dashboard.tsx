@@ -1,30 +1,29 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/StatCard";
-import { Users, Palette, FolderOpen, Ruler, PlusCircle, FileText, UserPlus, ImagePlus } from "lucide-react";
+import { Users, Palette, FolderOpen, Ruler, UserPlus, FileText, ImagePlus, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { format, subMonths } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const CHART_COLORS = [
   "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(var(--secondary))",
+  "hsl(250, 50%, 70%)",
+  "hsl(280, 55%, 55%)",
   "hsl(210, 70%, 55%)",
   "hsl(340, 65%, 50%)",
   "hsl(160, 55%, 45%)",
 ];
 
 const Dashboard = () => {
+  const { tenant } = useAuth();
   const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0 });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentMeasurements, setRecentMeasurements] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [measurementsByMonth, setMeasurementsByMonth] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [designsByCategory, setDesignsByCategory] = useState<any[]>([]);
 
   useEffect(() => {
@@ -35,14 +34,8 @@ const Dashboard = () => {
         supabase.from("categories").select("id", { count: "exact", head: true }),
         supabase.from("measurements").select("id", { count: "exact", head: true }),
       ]);
-      setStats({
-        customers: c.count ?? 0,
-        designs: d.count ?? 0,
-        categories: cat.count ?? 0,
-        measurements: m.count ?? 0,
-      });
+      setStats({ customers: c.count ?? 0, designs: d.count ?? 0, categories: cat.count ?? 0, measurements: m.count ?? 0 });
 
-      // Recent measurements
       const { data: recent } = await supabase
         .from("measurements")
         .select("id, date_recorded, customer_id, customers(first_name, last_name)")
@@ -50,7 +43,6 @@ const Dashboard = () => {
         .limit(5);
       setRecentMeasurements(recent ?? []);
 
-      // Measurements by month (last 6 months)
       const { data: allMeasurements } = await supabase
         .from("measurements")
         .select("date_recorded")
@@ -68,13 +60,11 @@ const Dashboard = () => {
       });
       setMeasurementsByMonth(Object.entries(monthMap).map(([month, count]) => ({ month, count })));
 
-      // Designs by category
       const { data: designs } = await supabase
         .from("designs")
         .select("category_id, categories(name)");
       const catMap: Record<string, number> = {};
       (designs ?? []).forEach((d) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const name = (d.categories as any)?.name ?? "Uncategorized";
         catMap[name] = (catMap[name] || 0) + 1;
       });
@@ -83,10 +73,7 @@ const Dashboard = () => {
     load();
   }, []);
 
-  const measurementsChartConfig = {
-    count: { label: "Measurements", color: "hsl(var(--primary))" },
-  };
-
+  const measurementsChartConfig = { count: { label: "Measurements", color: "hsl(var(--primary))" } };
   const designsChartConfig = designsByCategory.reduce((acc, item, i) => {
     acc[item.name] = { label: item.name, color: CHART_COLORS[i % CHART_COLORS.length] };
     return acc;
@@ -94,12 +81,20 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Overview of your fashion business</p>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">
+            {tenant ? `Welcome, ${tenant.business_name}` : "Dashboard"}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Here's an overview of your fashion business</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>{format(new Date(), "EEEE, MMM d, yyyy")}</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Customers" value={stats.customers} icon={Users} />
         <StatCard title="Designs" value={stats.designs} icon={Palette} />
         <StatCard title="Categories" value={stats.categories} icon={FolderOpen} />
@@ -109,67 +104,56 @@ const Dashboard = () => {
       {/* Quick Actions */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="font-display text-lg">Quick Actions</CardTitle>
+          <CardTitle className="font-display text-base">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <Button asChild className="gap-2">
-            <Link to="/customers"><UserPlus className="w-4 h-4" /> Add Customer</Link>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button asChild size="sm" className="gap-2 rounded-lg">
+            <Link to="/customers"><UserPlus className="w-3.5 h-3.5" /> Add Customer</Link>
           </Button>
-          <Button asChild variant="secondary" className="gap-2">
-            <Link to="/measurements"><FileText className="w-4 h-4" /> Add Measurement</Link>
+          <Button asChild size="sm" variant="secondary" className="gap-2 rounded-lg">
+            <Link to="/measurements"><FileText className="w-3.5 h-3.5" /> Add Measurement</Link>
           </Button>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/designs"><ImagePlus className="w-4 h-4" /> Add Design</Link>
+          <Button asChild size="sm" variant="outline" className="gap-2 rounded-lg">
+            <Link to="/designs"><ImagePlus className="w-3.5 h-3.5" /> Add Design</Link>
           </Button>
         </CardContent>
       </Card>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Measurements Over Time */}
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-lg">Measurements Over Time</CardTitle>
+            <CardTitle className="font-display text-base">Measurements Over Time</CardTitle>
           </CardHeader>
           <CardContent>
             {measurementsByMonth.length === 0 ? (
               <p className="text-muted-foreground text-sm">No data yet.</p>
             ) : (
-              <ChartContainer config={measurementsChartConfig} className="h-[250px] w-full">
+              <ChartContainer config={measurementsChartConfig} className="h-[220px] w-full">
                 <BarChart data={measurementsByMonth}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ChartContainer>
             )}
           </CardContent>
         </Card>
 
-        {/* Designs by Category */}
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-lg">Designs by Category</CardTitle>
+            <CardTitle className="font-display text-base">Designs by Category</CardTitle>
           </CardHeader>
           <CardContent>
             {designsByCategory.length === 0 ? (
               <p className="text-muted-foreground text-sm">No designs yet.</p>
             ) : (
-              <ChartContainer config={designsChartConfig} className="h-[250px] w-full">
+              <ChartContainer config={designsChartConfig} className="h-[220px] w-full">
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                  <Pie
-                    data={designsByCategory}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    label={({ name, value }) => `${name} (${value})`}
-                    labelLine={false}
-                  >
+                  <Pie data={designsByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} label={({ name, value }) => `${name} (${value})`} labelLine={false}>
                     {designsByCategory.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
@@ -181,20 +165,19 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Recent Measurements */}
+      {/* Recent */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="font-display text-lg">Recent Measurements</CardTitle>
+          <CardTitle className="font-display text-base">Recent Measurements</CardTitle>
         </CardHeader>
         <CardContent>
           {recentMeasurements.length === 0 ? (
             <p className="text-muted-foreground text-sm">No measurements recorded yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentMeasurements.map((m) => (
-                <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                   <span className="text-sm font-medium text-foreground">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {(m.customers as any)?.first_name} {(m.customers as any)?.last_name}
                   </span>
                   <span className="text-xs text-muted-foreground">
