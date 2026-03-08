@@ -75,7 +75,7 @@ const Auth = () => {
               {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
             </CardTitle>
             <CardDescription>
-              {isForgot ? "Enter your email to receive a reset link" : isLogin ? "Sign in to your account" : "Get started with FashionDesk"}
+              {isForgot ? "Enter your email to receive a reset link" : isLogin ? "Sign in to your account" : "Get started with Rina's Fit"}
             </CardDescription>
           </CardHeader>
           <CardContent>
