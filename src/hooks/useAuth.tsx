@@ -9,6 +9,12 @@ interface TenantInfo {
   business_name: string;
   slug: string;
   status: string;
+  business_email?: string;
+  owner_name?: string;
+  phone?: string | null;
+  address?: string | null;
+  country?: string | null;
+  description?: string | null;
 }
 
 interface AuthContextType {
