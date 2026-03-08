@@ -35,7 +35,7 @@ const TenantRegister = () => {
     const slug = slugify(form.business_name);
     if (!slug) { toast.error("Invalid business name"); setLoading(false); return; }
 
-    // Create tenant
+    // Create tenant - don't use .select() since RLS SELECT requires tenant assignment
     const { data: tenant, error: tenantErr } = await supabase
       .from("tenants")
       .insert({
@@ -51,8 +51,26 @@ const TenantRegister = () => {
       .select("id")
       .single();
 
+    // If RLS blocks the select, try fetching by slug instead
+    let tenantId = tenant?.id;
     if (tenantErr) {
-      toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
+      // Try to find the tenant we just created by slug
+      const { data: found } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (found) {
+        tenantId = found.id;
+      } else {
+        toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (!tenantId) {
+      toast.error("Failed to create organization");
       setLoading(false);
       return;
     }
@@ -60,7 +78,7 @@ const TenantRegister = () => {
     // Update profile with tenant_id
     const { error: profileErr } = await supabase
       .from("profiles")
-      .update({ tenant_id: tenant.id } as any)
+      .update({ tenant_id: tenantId } as any)
       .eq("user_id", user.id);
 
     if (profileErr) { toast.error(profileErr.message); setLoading(false); return; }
@@ -68,7 +86,7 @@ const TenantRegister = () => {
     // Create or update user_role as admin for this tenant
     const { error: roleErr } = await supabase
       .from("user_roles")
-      .upsert({ user_id: user.id, role: "admin", tenant_id: tenant.id } as any, { onConflict: "user_id,role" });
+      .upsert({ user_id: user.id, role: "admin", tenant_id: tenantId } as any, { onConflict: "user_id,role" });
 
     if (roleErr) { toast.error(roleErr.message); setLoading(false); return; }
 
