@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ interface Customer {
 const emptyForm = { first_name: "", last_name: "", phone: "", email: "", address: "", gender: "" };
 
 const Customers = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, tenantId } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,13 +55,14 @@ const Customers = () => {
       email: form.email || null,
       address: form.address || null,
       gender: form.gender || null,
+      tenant_id: tenantId,
     };
 
     if (editingId) {
-      const { error } = await supabase.from("customers").update(payload).eq("id", editingId);
+      const { error } = await supabase.from("customers").update(payload as any).eq("id", editingId);
       if (error) toast.error(error.message); else toast.success("Customer updated");
     } else {
-      const { error } = await supabase.from("customers").insert({ ...payload, created_by: user?.id });
+      const { error } = await supabase.from("customers").insert({ ...payload, created_by: user?.id } as any);
       if (error) toast.error(error.message); else toast.success("Customer added");
     }
     setLoading(false);

@@ -20,20 +20,31 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          tenant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -46,6 +57,7 @@ export type Database = {
           id: string
           last_name: string
           phone: string | null
+          tenant_id: string | null
         }
         Insert: {
           address?: string | null
@@ -57,6 +69,7 @@ export type Database = {
           id?: string
           last_name: string
           phone?: string | null
+          tenant_id?: string | null
         }
         Update: {
           address?: string | null
@@ -68,8 +81,17 @@ export type Database = {
           id?: string
           last_name?: string
           phone?: string | null
+          tenant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       designs: {
         Row: {
@@ -77,8 +99,10 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          gender: string | null
           id: string
           image_url: string | null
+          tenant_id: string | null
           title: string
           uploaded_by: string | null
         }
@@ -87,8 +111,10 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
+          tenant_id?: string | null
           title: string
           uploaded_by?: string | null
         }
@@ -97,8 +123,10 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
+          tenant_id?: string | null
           title?: string
           uploaded_by?: string | null
         }
@@ -108,6 +136,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "designs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -136,6 +171,7 @@ export type Database = {
           shirt_length: number | null
           shoulder: number | null
           sleeve_length: number | null
+          tenant_id: string | null
           thigh: number | null
           top_length: number | null
           trouser_length: number | null
@@ -164,6 +200,7 @@ export type Database = {
           shirt_length?: number | null
           shoulder?: number | null
           sleeve_length?: number | null
+          tenant_id?: string | null
           thigh?: number | null
           top_length?: number | null
           trouser_length?: number | null
@@ -192,6 +229,7 @@ export type Database = {
           shirt_length?: number | null
           shoulder?: number | null
           sleeve_length?: number | null
+          tenant_id?: string | null
           thigh?: number | null
           top_length?: number | null
           trouser_length?: number | null
@@ -205,6 +243,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "measurements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -213,6 +258,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
@@ -220,6 +266,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
@@ -227,7 +274,61 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          tenant_id?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          address: string | null
+          business_email: string
+          business_name: string
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          owner_name: string
+          phone: string | null
+          slug: string
+          status: Database["public"]["Enums"]["tenant_status"]
+        }
+        Insert: {
+          address?: string | null
+          business_email: string
+          business_name: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          owner_name: string
+          phone?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+        }
+        Update: {
+          address?: string | null
+          business_email?: string
+          business_name?: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          owner_name?: string
+          phone?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["tenant_status"]
         }
         Relationships: []
       }
@@ -235,25 +336,37 @@ export type Database = {
         Row: {
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_user_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -261,9 +374,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "staff"
+      tenant_status: "pending" | "approved" | "suspended" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -392,6 +507,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
+      tenant_status: ["pending", "approved", "suspended", "rejected"],
     },
   },
 } as const
