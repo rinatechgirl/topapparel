@@ -78,12 +78,13 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<LandingGate />} />
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/register-business" element={<ProtectedRoute><TenantRegister /></ProtectedRoute>} />
             <Route path="/pending-approval" element={<ProtectedRoute><PendingApproval /></ProtectedRoute>} />
             <Route element={<TenantGuard><AppLayout /></TenantGuard>}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
