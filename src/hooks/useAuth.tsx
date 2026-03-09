@@ -56,6 +56,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Try to accept any pending invitation first
     await supabase.rpc("accept_pending_invitation");
 
+    // Check platform admin status via secure RPC (bypasses RLS issues)
+    const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
+    const platformAdmin = isPlatAdmin === true;
+    setIsPlatformAdmin(platformAdmin);
+
     // Fetch role
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -64,12 +69,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .limit(1)
       .maybeSingle();
 
-    const userRole = (roleData?.role as AppRole) ?? "staff";
+    const userRole = platformAdmin ? "admin" : ((roleData?.role as AppRole) ?? "staff");
     setRole(userRole);
 
-    // Check if platform admin (role=admin, tenant_id=null)
-    const platformAdmin = userRole === "admin" && !roleData?.tenant_id;
-    setIsPlatformAdmin(platformAdmin);
+    // Platform admins don't need tenant context
+    if (platformAdmin) {
+      setTenantId(null);
+      setTenant(null);
+      return;
+    }
 
     // Fetch profile for tenant_id
     const { data: profile } = await supabase
