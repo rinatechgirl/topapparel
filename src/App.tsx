@@ -24,10 +24,10 @@ import Landing from "@/pages/Landing";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, isPlatformAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />;
+  if (adminOnly && !isAdmin && !isPlatformAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -36,7 +36,7 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Platform admins viewing admin panel bypass tenant check
+  // Platform admins bypass all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
 
   // No tenant assigned - redirect to register
@@ -57,17 +57,30 @@ const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AuthGate = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isPlatformAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Auth />;
 };
 
 const LandingGate = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isPlatformAdmin } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Landing />;
+};
+
+const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isPlatformAdmin, tenantId } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  // Platform admins should never see registration
+  if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+  // Already has a tenant - go to dashboard
+  if (tenantId) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
 };
 
 const App = () => (
