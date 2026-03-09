@@ -94,7 +94,7 @@ const App = () => (
             <Route path="/" element={<LandingGate />} />
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/register-business" element={<ProtectedRoute><TenantRegister /></ProtectedRoute>} />
+            <Route path="/register-business" element={<RegisterGuard><TenantRegister /></RegisterGuard>} />
             <Route path="/pending-approval" element={<ProtectedRoute><PendingApproval /></ProtectedRoute>} />
             <Route element={<TenantGuard><AppLayout /></TenantGuard>}>
               <Route path="/dashboard" element={<Dashboard />} />
