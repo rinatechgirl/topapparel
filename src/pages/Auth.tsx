@@ -130,6 +130,12 @@ const Auth = () => {
             </p>
           </div>
 
+          {tenantError && (
+            <div className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              {tenantError}
+            </div>
+          )}
+
           {isForgot ? (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
