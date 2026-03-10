@@ -27,6 +27,9 @@ interface AuthContextType {
   isPlatformAdmin: boolean;
   tenantId: string | null;
   tenant: TenantInfo | null;
+  subdomainTenant: TenantInfo | null;
+  subdomainSlug: string | null;
+  tenantMismatch: boolean;
   signOut: () => Promise<void>;
   refreshTenant: () => Promise<void>;
 }
@@ -40,6 +43,9 @@ const AuthContext = createContext<AuthContextType>({
   isPlatformAdmin: false,
   tenantId: null,
   tenant: null,
+  subdomainTenant: null,
+  subdomainSlug: null,
+  tenantMismatch: false,
   signOut: async () => {},
   refreshTenant: async () => {},
 });
@@ -52,26 +58,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [subdomainTenant, setSubdomainTenant] = useState<TenantInfo | null>(null);
+  const [subdomainSlug] = useState<string | null>(() => getTenantSlugFromHostname());
+  const [tenantMismatch, setTenantMismatch] = useState(false);
 
-  // Mutex to prevent concurrent fetchUserContext calls
   const fetchingRef = useRef(false);
   const initializedRef = useRef(false);
 
+  // Resolve the subdomain tenant once on mount
+  const subdomainResolvedRef = useRef(false);
+  useEffect(() => {
+    if (!subdomainSlug || subdomainResolvedRef.current) return;
+    subdomainResolvedRef.current = true;
+    supabase
+      .from("tenants")
+      .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+      .eq("slug", subdomainSlug)
+      .maybeSingle()
+      .then(({ data }) => {
+        setSubdomainTenant(data as TenantInfo | null);
+      });
+  }, [subdomainSlug]);
+
   const fetchUserContext = async (userId: string) => {
-    // Prevent duplicate simultaneous calls
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
     try {
-      // Try to accept any pending invitation first
       await supabase.rpc("accept_pending_invitation");
 
-      // Check platform admin status
       const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
       const platformAdmin = isPlatAdmin === true;
       setIsPlatformAdmin(platformAdmin);
 
-      // Fetch role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role, tenant_id")
@@ -82,17 +101,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userRole = platformAdmin ? "admin" : ((roleData?.role as AppRole) ?? "staff");
       setRole(userRole);
 
-      // Platform admins don't need tenant context
       if (platformAdmin) {
         setTenantId(null);
         setTenant(null);
+        setTenantMismatch(false);
         return;
       }
 
-      // Check if we're on a tenant subdomain
-      const subdomainSlug = getTenantSlugFromHostname();
-
-      // Fetch profile for tenant_id
       const { data: profile } = await supabase
         .from("profiles")
         .select("tenant_id")
@@ -103,20 +118,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // If on a subdomain and user has no tenant_id yet, try to resolve from subdomain
       if (!tid && subdomainSlug) {
-        const { data: subdomainTenant } = await supabase
+        const { data: sdTenant } = await supabase
           .from("tenants")
           .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
           .eq("slug", subdomainSlug)
           .maybeSingle();
 
-        if (subdomainTenant) {
-          setTenant(subdomainTenant as TenantInfo);
-          setTenantId(subdomainTenant.id);
+        if (sdTenant) {
+          setSubdomainTenant(sdTenant as TenantInfo);
+          // User has no tenant but is on a subdomain — mismatch
+          setTenantMismatch(true);
+          setTenantId(null);
+          setTenant(null);
           return;
         }
       }
 
       setTenantId(tid);
+
+      // Check tenant mismatch on subdomain
+      if (subdomainSlug && tid) {
+        const { data: sdTenant } = await supabase
+          .from("tenants")
+          .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+          .eq("slug", subdomainSlug)
+          .maybeSingle();
+
+        if (sdTenant) {
+          setSubdomainTenant(sdTenant as TenantInfo);
+          if (sdTenant.id !== tid) {
+            // User's tenant doesn't match the subdomain — sign them out
+            setTenantMismatch(true);
+            await supabase.auth.signOut();
+            return;
+          }
+        }
+        setTenantMismatch(false);
+      } else {
+        setTenantMismatch(false);
+      }
 
       if (tid) {
         const { data: tenantData } = await supabase
@@ -138,7 +178,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Use getSession first, then listen for changes
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -154,7 +193,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Only fetch if already initialized (skip the initial duplicate call)
           if (initializedRef.current) {
             await fetchUserContext(session.user.id);
           }
@@ -163,6 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTenantId(null);
           setTenant(null);
           setIsPlatformAdmin(false);
+          setTenantMismatch(false);
         }
         if (initializedRef.current) {
           setLoading(false);
@@ -183,6 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin: role === "admin",
       isPlatformAdmin,
       tenantId, tenant,
+      subdomainTenant, subdomainSlug, tenantMismatch,
       signOut, refreshTenant,
     }}>
       {children}

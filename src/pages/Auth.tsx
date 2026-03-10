@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tenantError, setTenantError] = useState<string | null>(null);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +33,40 @@ const Auth = () => {
     setLoading(true);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error(error.message);
-      else toast.success("Welcome back!");
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+      } else if (authData.user) {
+        // Check tenant mismatch on subdomain
+        const slug = getTenantSlugFromHostname();
+        if (slug) {
+          const { data: sdTenant } = await supabase
+            .from("tenants")
+            .select("id")
+            .eq("slug", slug)
+            .maybeSingle();
+
+          if (sdTenant) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("tenant_id")
+              .eq("user_id", authData.user.id)
+              .maybeSingle();
+
+            // Check if platform admin
+            const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
+
+            if (!isPlatAdmin && profile?.tenant_id !== sdTenant.id) {
+              await supabase.auth.signOut();
+              setTenantError("Your account does not belong to this organization. Please visit your correct business URL to login.");
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        setTenantError(null);
+        toast.success("Welcome back!");
+      }
     } else {
       const { error } = await supabase.auth.signUp({
         email,
@@ -96,6 +129,12 @@ const Auth = () => {
               {isForgot ? "Enter your email to receive a reset link" : isLogin ? "Sign in to continue to your dashboard" : "Get started with Rina's Fit"}
             </p>
           </div>
+
+          {tenantError && (
+            <div className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              {tenantError}
+            </div>
+          )}
 
           {isForgot ? (
             <form onSubmit={handleForgotPassword} className="space-y-4">
