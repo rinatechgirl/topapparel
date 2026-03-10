@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import AppLayout from "@/components/AppLayout";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -39,11 +40,17 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
   // Platform admins bypass all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
 
-  // No tenant assigned - redirect to register
-  if (!tenantId) return <Navigate to="/register-business" replace />;
+  // If on a tenant subdomain, the tenant context may come from the subdomain
+  const subdomainSlug = getTenantSlugFromHostname();
 
-  // Tenant not approved
+  // No tenant assigned and not on a subdomain - redirect to register
+  if (!tenantId && !subdomainSlug) return <Navigate to="/register-business" replace />;
+
+  // Tenant not approved (only check if we have tenant info loaded)
   if (tenant && tenant.status !== "approved") return <Navigate to="/pending-approval" replace />;
+
+  // If we have tenantId but tenant info hasn't loaded yet, wait
+  if (tenantId && !tenant) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
 
   return <>{children}</>;
 };
@@ -76,9 +83,7 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isPlatformAdmin, tenantId } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
-  // Platform admins should never see registration
   if (isPlatformAdmin) return <Navigate to="/admin" replace />;
-  // Already has a tenant - go to dashboard
   if (tenantId) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
