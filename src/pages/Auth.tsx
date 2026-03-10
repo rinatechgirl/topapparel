@@ -33,9 +33,40 @@ const Auth = () => {
     setLoading(true);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error(error.message);
-      else toast.success("Welcome back!");
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+      } else if (authData.user) {
+        // Check tenant mismatch on subdomain
+        const slug = getTenantSlugFromHostname();
+        if (slug) {
+          const { data: sdTenant } = await supabase
+            .from("tenants")
+            .select("id")
+            .eq("slug", slug)
+            .maybeSingle();
+
+          if (sdTenant) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("tenant_id")
+              .eq("user_id", authData.user.id)
+              .maybeSingle();
+
+            // Check if platform admin
+            const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
+
+            if (!isPlatAdmin && profile?.tenant_id !== sdTenant.id) {
+              await supabase.auth.signOut();
+              setTenantError("Your account does not belong to this organization. Please visit your correct business URL to login.");
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        setTenantError(null);
+        toast.success("Welcome back!");
+      }
     } else {
       const { error } = await supabase.auth.signUp({
         email,
