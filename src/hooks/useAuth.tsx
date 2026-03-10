@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "staff";
@@ -52,52 +53,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
+  // Mutex to prevent concurrent fetchUserContext calls
+  const fetchingRef = useRef(false);
+  const initializedRef = useRef(false);
+
   const fetchUserContext = async (userId: string) => {
-    // Try to accept any pending invitation first
-    await supabase.rpc("accept_pending_invitation");
+    // Prevent duplicate simultaneous calls
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
 
-    // Check platform admin status via secure RPC (bypasses RLS issues)
-    const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
-    const platformAdmin = isPlatAdmin === true;
-    setIsPlatformAdmin(platformAdmin);
+    try {
+      // Try to accept any pending invitation first
+      await supabase.rpc("accept_pending_invitation");
 
-    // Fetch role
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role, tenant_id")
-      .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
+      // Check platform admin status
+      const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
+      const platformAdmin = isPlatAdmin === true;
+      setIsPlatformAdmin(platformAdmin);
 
-    const userRole = platformAdmin ? "admin" : ((roleData?.role as AppRole) ?? "staff");
-    setRole(userRole);
-
-    // Platform admins don't need tenant context
-    if (platformAdmin) {
-      setTenantId(null);
-      setTenant(null);
-      return;
-    }
-
-    // Fetch profile for tenant_id
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("tenant_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const tid = profile?.tenant_id ?? null;
-    setTenantId(tid);
-
-    if (tid) {
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
-        .eq("id", tid)
+      // Fetch role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role, tenant_id")
+        .eq("user_id", userId)
+        .limit(1)
         .maybeSingle();
-      setTenant(tenantData as TenantInfo | null);
-    } else {
-      setTenant(null);
+
+      const userRole = platformAdmin ? "admin" : ((roleData?.role as AppRole) ?? "staff");
+      setRole(userRole);
+
+      // Platform admins don't need tenant context
+      if (platformAdmin) {
+        setTenantId(null);
+        setTenant(null);
+        return;
+      }
+
+      // Check if we're on a tenant subdomain
+      const subdomainSlug = getTenantSlugFromHostname();
+
+      // Fetch profile for tenant_id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      let tid = profile?.tenant_id ?? null;
+
+      // If on a subdomain and user has no tenant_id yet, try to resolve from subdomain
+      if (!tid && subdomainSlug) {
+        const { data: subdomainTenant } = await supabase
+          .from("tenants")
+          .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+          .eq("slug", subdomainSlug)
+          .maybeSingle();
+
+        if (subdomainTenant) {
+          setTenant(subdomainTenant as TenantInfo);
+          setTenantId(subdomainTenant.id);
+          return;
+        }
+      }
+
+      setTenantId(tid);
+
+      if (tid) {
+        const { data: tenantData } = await supabase
+          .from("tenants")
+          .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+          .eq("id", tid)
+          .maybeSingle();
+        setTenant(tenantData as TenantInfo | null);
+      } else {
+        setTenant(null);
+      }
+    } finally {
+      fetchingRef.current = false;
     }
   };
 
@@ -106,22 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchUserContext(session.user.id);
-        } else {
-          setRole(null);
-          setTenantId(null);
-          setTenant(null);
-          setIsPlatformAdmin(false);
-        }
-        setLoading(false);
-      }
-    );
-
+    // Use getSession first, then listen for changes
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -129,7 +146,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await fetchUserContext(session.user.id);
       }
       setLoading(false);
+      initializedRef.current = true;
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Only fetch if already initialized (skip the initial duplicate call)
+          if (initializedRef.current) {
+            await fetchUserContext(session.user.id);
+          }
+        } else {
+          setRole(null);
+          setTenantId(null);
+          setTenant(null);
+          setIsPlatformAdmin(false);
+        }
+        if (initializedRef.current) {
+          setLoading(false);
+        }
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);

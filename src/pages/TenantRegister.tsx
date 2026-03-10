@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sparkles, Building2, ArrowRight } from "lucide-react";
+import { Building2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const slugify = (str: string) =>
@@ -32,56 +32,80 @@ const TenantRegister = () => {
     if (!user) { toast.error("You must be signed in"); return; }
     setLoading(true);
 
-    const slug = slugify(form.business_name);
-    if (!slug) { toast.error("Invalid business name"); setLoading(false); return; }
+    try {
+      const slug = slugify(form.business_name);
+      if (!slug) { toast.error("Invalid business name"); setLoading(false); return; }
 
-    const { data: tenant, error: tenantErr } = await supabase
-      .from("tenants")
-      .insert({
-        business_name: form.business_name.trim(),
-        slug,
-        business_email: form.business_email.trim(),
-        owner_name: form.owner_name.trim(),
-        phone: form.phone.trim() || null,
-        address: form.address.trim() || null,
-        country: form.country.trim() || null,
-        description: form.description.trim() || null,
-      } as any)
-      .select("id")
-      .single();
-
-    let tenantId = tenant?.id;
-    if (tenantErr) {
-      const { data: found } = await supabase
+      // Step 1: Create tenant
+      const { data: tenant, error: tenantErr } = await supabase
         .from("tenants")
+        .insert({
+          business_name: form.business_name.trim(),
+          slug,
+          business_email: form.business_email.trim(),
+          owner_name: form.owner_name.trim(),
+          phone: form.phone.trim() || null,
+          address: form.address.trim() || null,
+          country: form.country.trim() || null,
+          description: form.description.trim() || null,
+        } as any)
         .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
-      if (found) tenantId = found.id;
-      else {
-        toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
+        .single();
+
+      let tenantId = tenant?.id;
+      if (tenantErr) {
+        // Check if it's a duplicate slug — find existing
+        const { data: found } = await supabase
+          .from("tenants")
+          .select("id")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (found) tenantId = found.id;
+        else {
+          toast.error(tenantErr.message.includes("duplicate") ? "Business name already taken" : tenantErr.message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!tenantId) { toast.error("Failed to create organization"); setLoading(false); return; }
+
+      // Step 2: Update profile with tenant_id
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({ tenant_id: tenantId } as any)
+        .eq("user_id", user.id);
+
+      if (profileErr) {
+        console.error("Profile update error:", profileErr);
+        toast.error("Failed to link profile: " + profileErr.message);
         setLoading(false);
         return;
       }
+
+      // Step 3: Create admin role for this tenant
+      const { error: roleErr } = await supabase
+        .from("user_roles")
+        .upsert({ user_id: user.id, role: "admin", tenant_id: tenantId } as any, { onConflict: "user_id,role" });
+
+      if (roleErr) {
+        console.error("Role upsert error:", roleErr);
+        toast.error("Failed to set role: " + roleErr.message);
+        setLoading(false);
+        return;
+      }
+
+      // Step 4: Refresh auth context so it picks up the new tenant_id
+      await refreshTenant();
+
+      toast.success("Organization registered! Awaiting approval.");
+      navigate("/pending-approval");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
-
-    if (!tenantId) { toast.error("Failed to create organization"); setLoading(false); return; }
-
-    const { error: profileErr } = await supabase
-      .from("profiles")
-      .update({ tenant_id: tenantId } as any)
-      .eq("user_id", user.id);
-    if (profileErr) { toast.error(profileErr.message); setLoading(false); return; }
-
-    const { error: roleErr } = await supabase
-      .from("user_roles")
-      .upsert({ user_id: user.id, role: "admin", tenant_id: tenantId } as any, { onConflict: "user_id,role" });
-    if (roleErr) { toast.error(roleErr.message); setLoading(false); return; }
-
-    toast.success("Organization registered! Awaiting approval.");
-    await refreshTenant();
-    setLoading(false);
-    navigate("/pending-approval");
   };
 
   return (
