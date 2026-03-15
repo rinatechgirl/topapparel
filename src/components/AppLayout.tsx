@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
-import { Menu, Bell } from "lucide-react";
+import { Menu, Bell, Scissors } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const AppLayout = () => {
@@ -21,13 +21,14 @@ const AppLayout = () => {
               <Menu className="w-5 h-5" />
             </button>
             {tenant && (
-              <span className="hidden sm:block text-sm font-medium text-muted-foreground">
+              <span className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Scissors className="w-3.5 h-3.5 text-accent" />
                 {tenant.business_name}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors">
+            <button className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors relative">
               <Bell className="w-4 h-4" />
             </button>
           </div>
