@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, Users, Ruler, Palette, FolderOpen, BarChart3,
-  LogOut, X, Shield, Settings, Sparkles,
+  LogOut, X, Shield, Settings, Scissors,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,13 +50,16 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
+        {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[hsl(250,65%,55%)] to-[hsl(280,65%,55%)] flex items-center justify-center shadow-lg shadow-[hsl(250,65%,55%)]/20">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center border border-accent/30">
+              <Scissors className="w-5 h-5 text-accent" />
             </div>
             <div className="min-w-0">
-              <span className="font-display font-bold text-base text-sidebar-foreground block leading-tight tracking-tight">Rina's Fit</span>
+              <span className="font-display font-bold text-base text-sidebar-foreground block leading-tight tracking-tight">
+                Rina<span className="text-accent italic">Fit</span>
+              </span>
               {tenant && (
                 <span className="text-[10px] text-sidebar-foreground/50 truncate block">{tenant.business_name}</span>
               )}
@@ -67,8 +70,9 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
           </button>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">Menu</p>
+          <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/35">Menu</p>
           {allItems.map((item) => {
             const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
             return (
@@ -78,29 +82,30 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
                 end={item.to === "/"}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
                   isActive
-                    ? "bg-sidebar-primary/10 text-sidebar-primary shadow-sm"
-                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    ? "bg-accent/15 text-accent shadow-sm"
+                    : "text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >
-                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-sidebar-primary")} />
+                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-accent")} />
                 {item.label}
               </NavLink>
             );
           })}
         </nav>
 
+        {/* User / Logout */}
         <div className="px-3 py-4 border-t border-sidebar-border">
-          <div className="px-3 py-2 text-[11px] text-sidebar-foreground/40 truncate mb-1">
+          <div className="px-3 py-2 text-[11px] text-sidebar-foreground/35 truncate mb-1">
             {user?.email}
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors w-full"
           >
             <LogOut className="w-[18px] h-[18px]" />
-            Sign Out
+            Logout
           </button>
         </div>
       </aside>

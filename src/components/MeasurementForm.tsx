@@ -22,7 +22,6 @@ const OUTFIT_TYPES = [
   "Shirt", "Suit", "Native Wear", "Two-Piece Set", "Custom"
 ];
 const GENDERS = ["Male", "Female", "Unisex"];
-const UNITS = ["cm", "inches"];
 
 const OUTFIT_SCHEMAS: Record<string, { key: string, label: string }[]> = {
   "Short Gown": [
@@ -106,7 +105,6 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
     }
     setLoading(true);
 
-    // Build payload with individual columns
     const numericData: Record<string, number | null> = {};
     for (const f of currentFields) {
       const rawVal = formData[f.key];
@@ -142,26 +140,26 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
   };
 
   return (
-    <Card className="shadow-sm border-accent/30 max-h-[90vh] overflow-y-auto w-full">
-      <CardHeader className="pb-3 border-b">
-        <CardTitle className="font-display text-lg">{measurement ? "Edit Measurement" : "New Measurement"}</CardTitle>
+    <Card className="shadow-sm border-accent/20 max-h-[90vh] overflow-y-auto w-full">
+      <CardHeader className="pb-3 border-b border-border/60">
+        <CardTitle className="font-display text-lg">{measurement ? "Edit Measurement" : "Enter Measurements"}</CardTitle>
       </CardHeader>
       <CardContent className="pt-5">
         <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Gender *</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Gender *</Label>
               <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Select gender" /></SelectTrigger>
                 <SelectContent>
                   {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Outfit Type *</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Outfit Type *</Label>
               <Select value={outfitType} onValueChange={setOutfitType}>
-                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
                   {OUTFIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
@@ -169,8 +167,8 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
             </div>
           </div>
 
-          <div className="py-4 border-t border-border">
-            <Label className="text-base font-semibold text-foreground mb-4 block">Dimensions</Label>
+          <div className="py-4 border-t border-border/60">
+            <Label className="text-sm font-display font-semibold text-foreground mb-4 block">Dimensions</Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {currentFields.map((f) => {
                 let displayLabel = f.label;
@@ -179,22 +177,22 @@ const MeasurementForm = ({ customerId, measurement, onClose, onSaved }: Props) =
                 }
                 return (
                   <div key={f.key} className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">{displayLabel}</Label>
-                    <Input type="number" step="0.1" min="0" value={formData[f.key] || ""} onChange={(e) => handleFieldChange(f.key, e.target.value)} />
+                    <Label className="text-xs text-muted-foreground font-medium">{displayLabel}</Label>
+                    <Input type="number" step="0.1" min="0" value={formData[f.key] || ""} onChange={(e) => handleFieldChange(f.key, e.target.value)} className="h-11" />
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-border">
-            <Label className="text-sm font-medium">Additional Notes</Label>
+          <div className="space-y-2 pt-2 border-t border-border/60">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Additional Notes</Label>
             <Textarea placeholder="Any specific adjustments, preferences, or observations..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
 
-          <div className="flex gap-3 justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Measurement"}</Button>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button type="button" variant="outline" onClick={onClose} className="h-11 px-6">Cancel</Button>
+            <Button type="submit" disabled={loading} className="h-11 px-8">{loading ? "Saving..." : "Save Measurements"}</Button>
           </div>
         </form>
       </CardContent>

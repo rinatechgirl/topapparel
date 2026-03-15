@@ -11,12 +11,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const CHART_COLORS = [
+  "hsl(var(--accent))",
   "hsl(var(--primary))",
-  "hsl(250, 50%, 70%)",
-  "hsl(280, 55%, 55%)",
-  "hsl(210, 70%, 55%)",
-  "hsl(340, 65%, 50%)",
-  "hsl(160, 55%, 45%)",
+  "hsl(35, 30%, 60%)",
+  "hsl(30, 25%, 45%)",
+  "hsl(38, 40%, 55%)",
+  "hsl(25, 20%, 50%)",
 ];
 
 const Dashboard = () => {
@@ -73,7 +73,7 @@ const Dashboard = () => {
     load();
   }, []);
 
-  const measurementsChartConfig = { count: { label: "Measurements", color: "hsl(var(--primary))" } };
+  const measurementsChartConfig = { count: { label: "Measurements", color: "hsl(var(--accent))" } };
   const designsChartConfig = designsByCategory.reduce((acc, item, i) => {
     acc[item.name] = { label: item.name, color: CHART_COLORS[i % CHART_COLORS.length] };
     return acc;
@@ -89,20 +89,20 @@ const Dashboard = () => {
           <p className="text-muted-foreground text-sm mt-0.5">Here's an overview of your fashion business</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <TrendingUp className="w-3.5 h-3.5" />
+          <TrendingUp className="w-3.5 h-3.5 text-accent" />
           <span>{format(new Date(), "EEEE, MMM d, yyyy")}</span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Customers" value={stats.customers} icon={Users} />
-        <StatCard title="Designs" value={stats.designs} icon={Palette} />
+        <StatCard title="Total Customers" value={stats.customers} icon={Users} />
+        <StatCard title="Total Designs" value={stats.designs} icon={Palette} />
         <StatCard title="Categories" value={stats.categories} icon={FolderOpen} />
         <StatCard title="Measurements" value={stats.measurements} icon={Ruler} />
       </div>
 
       {/* Quick Actions */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border-border/60">
         <CardHeader className="pb-3">
           <CardTitle className="font-display text-base">Quick Actions</CardTitle>
         </CardHeader>
@@ -121,7 +121,7 @@ const Dashboard = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border-border/60">
           <CardHeader>
             <CardTitle className="font-display text-base">Measurements Over Time</CardTitle>
           </CardHeader>
@@ -135,14 +135,14 @@ const Dashboard = () => {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ChartContainer>
             )}
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border-border/60">
           <CardHeader>
             <CardTitle className="font-display text-base">Designs by Category</CardTitle>
           </CardHeader>
@@ -165,26 +165,42 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Recent */}
-      <Card className="shadow-sm">
+      {/* Quick Overview table */}
+      <Card className="shadow-sm border-border/60">
         <CardHeader>
-          <CardTitle className="font-display text-base">Recent Measurements</CardTitle>
+          <CardTitle className="font-display text-base">Quick Overview</CardTitle>
         </CardHeader>
         <CardContent>
           {recentMeasurements.length === 0 ? (
             <p className="text-muted-foreground text-sm">No measurements recorded yet.</p>
           ) : (
-            <div className="space-y-2">
-              {recentMeasurements.map((m) => (
-                <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-                  <span className="text-sm font-medium text-foreground">
-                    {(m.customers as any)?.first_name} {(m.customers as any)?.last_name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(m.date_recorded), "MMM d, yyyy")}
-                  </span>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</th>
+                    <th className="text-left py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
+                    <th className="text-right py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentMeasurements.map((m) => (
+                    <tr key={m.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-3 font-medium text-foreground">
+                        {(m.customers as any)?.first_name} {(m.customers as any)?.last_name}
+                      </td>
+                      <td className="py-3 px-3 text-muted-foreground">
+                        {format(new Date(m.date_recorded), "MMM d, yyyy")}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <Link to={`/customers/${m.customer_id}`} className="text-xs font-medium text-accent hover:text-accent/80 transition-colors">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

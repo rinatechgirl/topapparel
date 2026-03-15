@@ -142,33 +142,39 @@ const Designs = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Designs</h1>
-          <p className="text-muted-foreground text-sm mt-1">Browse and manage your catalogue</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Fashion Catalogue</h1>
+          <p className="text-muted-foreground text-sm mt-1">Browse and manage your design collection</p>
         </div>
         {isAdmin && (
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Add Design</Button>
+              <Button className="gap-2"><Plus className="w-4 h-4" />Add Design</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader><DialogTitle className="font-display">{editingId ? "Edit Design" : "New Design"}</DialogTitle></DialogHeader>
               <form onSubmit={handleSave} className="space-y-4">
-                <div className="space-y-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-                <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Title *</Label>
+                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Description</Label>
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Category</Label>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
                     <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Select category" /></SelectTrigger>
                       <SelectContent>
                         {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Gender</Label>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Gender</Label>
                     <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
-                      <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Gender" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Male">Male</SelectItem>
                         <SelectItem value="Female">Female</SelectItem>
@@ -179,28 +185,29 @@ const Designs = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Front View Image</Label>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Front View</Label>
                     <Input type="file" accept="image/*" onChange={(e) => setFrontFile(e.target.files?.[0] ?? null)} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Back View Image</Label>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Back View</Label>
                     <Input type="file" accept="image/*" onChange={(e) => setBackFile(e.target.files?.[0] ?? null)} />
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Saving..." : "Save"}</Button>
+                <Button type="submit" className="w-full h-11" disabled={loading}>{loading ? "Saving..." : "Save Design"}</Button>
               </form>
             </DialogContent>
           </Dialog>
         )}
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search designs..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search designs..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-11" />
         </div>
         <Select value={filterGender} onValueChange={setFilterGender}>
-          <SelectTrigger className="w-32"><SelectValue placeholder="Gender" /></SelectTrigger>
+          <SelectTrigger className="w-32 h-11"><SelectValue placeholder="Gender" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Genders</SelectItem>
             <SelectItem value="Male">Male</SelectItem>
@@ -209,7 +216,7 @@ const Designs = () => {
           </SelectContent>
         </Select>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="All categories" /></SelectTrigger>
+          <SelectTrigger className="w-48 h-11"><SelectValue placeholder="All categories" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -217,15 +224,16 @@ const Designs = () => {
         </Select>
       </div>
 
+      {/* Design Grid */}
       {designs.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No designs found.</CardContent></Card>
+        <Card className="border-border/60"><CardContent className="py-12 text-center text-muted-foreground">No designs found.</CardContent></Card>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {designs.map((d) => {
             const isFlipped = flippedCards.has(d.id);
             return (
-              <Card key={d.id} className="shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer" onClick={() => setDetailDesign(d)}>
-                <div className="aspect-[4/5] bg-secondary relative overflow-hidden">
+              <Card key={d.id} className="shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border-border/60" onClick={() => setDetailDesign(d)}>
+                <div className="aspect-[4/5] bg-muted relative overflow-hidden">
                   <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-0" : "opacity-100"}`}>
                     {d.image_url ? <img src={d.image_url} alt={`${d.title} - Front`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>}
                   </div>
@@ -233,11 +241,11 @@ const Designs = () => {
                     {d.back_view_image_url ? <img src={d.back_view_image_url} alt={`${d.title} - Back`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center flex-col gap-2"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /><span className="text-xs text-muted-foreground/50">No back view</span></div>}
                   </div>
                   {(d.image_url || d.back_view_image_url) && (
-                    <button onClick={(e) => toggleFlip(d.id, e)} className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" title={isFlipped ? "Show front" : "Show back"}>
+                    <button onClick={(e) => toggleFlip(d.id, e)} className="absolute bottom-2 left-2 z-10 bg-card/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" title={isFlipped ? "Show front" : "Show back"}>
                       <RotateCcw className="w-4 h-4 text-foreground" />
                     </button>
                   )}
-                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-background/70 backdrop-blur-sm text-foreground px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">{isFlipped ? "Back" : "Front"}</span>
+                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-card/70 backdrop-blur-sm text-foreground px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity font-medium">{isFlipped ? "Back View" : "Front View"}</span>
                   {isAdmin && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "", gender: d.gender ?? "Unisex" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
@@ -246,12 +254,15 @@ const Designs = () => {
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <p className="font-medium text-foreground text-sm">{d.title}</p>
-                  <div className="flex gap-2 items-center mt-1">
-                    <p className="text-xs text-accent">{getCategoryName(d.category_id)}</p>
-                    {d.gender && <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full">{d.gender}</span>}
+                  <p className="font-display font-semibold text-foreground text-sm">{d.title}</p>
+                  <div className="flex gap-2 items-center mt-1.5">
+                    <p className="text-xs text-accent font-medium">{getCategoryName(d.category_id)}</p>
+                    {d.gender && <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium">{d.gender}</span>}
                   </div>
-                  {d.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
+                  {d.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{d.description}</p>}
+                  <Button size="sm" className="w-full mt-3 h-9 text-xs font-semibold uppercase tracking-wider" onClick={(e) => { e.stopPropagation(); setDetailDesign(d); }}>
+                    Select Design
+                  </Button>
                 </CardContent>
               </Card>
             );
@@ -259,23 +270,24 @@ const Designs = () => {
         </div>
       )}
 
+      {/* Detail Modal */}
       <Dialog open={!!detailDesign} onOpenChange={(o) => { if (!o) setDetailDesign(null); }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           {detailDesign && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display text-lg">{detailDesign.title}</DialogTitle>
+                <DialogTitle className="font-display text-xl">{detailDesign.title}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground">Front View</p>
-                  <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Front View</p>
+                  <div className="aspect-[4/5] bg-muted rounded-lg overflow-hidden">
                     {detailDesign.image_url ? <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground">Back View</p>
-                  <div className="aspect-[4/5] bg-secondary rounded-lg overflow-hidden">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Back View</p>
+                  <div className="aspect-[4/5] bg-muted rounded-lg overflow-hidden">
                     {detailDesign.back_view_image_url ? <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
@@ -283,7 +295,7 @@ const Designs = () => {
               <div className="space-y-2 mt-2">
                 <p className="text-xs text-muted-foreground"><span className="font-semibold">Category:</span> {getCategoryName(detailDesign.category_id)}</p>
                 {detailDesign.gender && <p className="text-xs text-muted-foreground"><span className="font-semibold">Gender:</span> {detailDesign.gender}</p>}
-                {detailDesign.description && <p className="text-sm text-foreground">{detailDesign.description}</p>}
+                {detailDesign.description && <p className="text-sm text-foreground mt-2">{detailDesign.description}</p>}
                 <p className="text-xs text-muted-foreground">Added: {new Date(detailDesign.created_at).toLocaleDateString()}</p>
               </div>
             </>
