@@ -95,13 +95,16 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         </nav>
 
         {/* User / Logout */}
-        <div className="px-3 py-4 border-t border-sidebar-border">
+        <div className="px-3 py-4 border-t border-sidebar-border shrink-0">
           <div className="px-3 py-2 text-[11px] text-sidebar-foreground/35 truncate mb-1">
             {user?.email}
           </div>
           <button
-            onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors w-full"
+            onClick={async () => {
+              await signOut();
+              window.location.href = "/";
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/55 hover:bg-destructive/20 hover:text-destructive transition-colors w-full cursor-pointer"
           >
             <LogOut className="w-[18px] h-[18px]" />
             Logout
