@@ -246,7 +246,7 @@ const TenantRegister = () => {
         .upsert({
           user_id: userId,
           tenant_id: tenantId,
-          email: email || user?.email ?? "",
+          email: (email || user?.email) ?? "",
           full_name: ownerName,
         });
 
