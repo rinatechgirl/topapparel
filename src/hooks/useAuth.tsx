@@ -182,18 +182,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mountedRef.current) return;
+
+      // TOKEN_REFRESHED fires every time the user switches back to the tab.
+      // We must NOT set loading=true for this — it causes the blank screen.
+      // The session is still valid; just update it silently.
+      if (event === "TOKEN_REFRESHED") {
+        setSession(session);
+        setUser(session?.user ?? null);
+        return;
+      }
 
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Skip the duplicate event fired on initial mount —
+        // Skip the duplicate SIGNED_IN fired on initial mount —
         // getSession() above already handled it.
         if (initializedRef.current) {
-          // Show loading during re-auth context fetch
-          setLoading(true);
+          // Only show loading for genuine sign-in events
+          if (event === "SIGNED_IN") setLoading(true);
           await fetchUserContext(session.user.id);
           if (mountedRef.current) setLoading(false);
         }
