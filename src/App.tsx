@@ -20,6 +20,7 @@ import TenantRegister from "@/pages/TenantRegister";
 import PendingApproval from "@/pages/PendingApproval";
 import AdminPanel from "@/pages/AdminPanel";
 import OrganizationSettings from "@/pages/OrganizationSettings";
+import StaffManagement from "@/pages/StaffManagement";
 import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
@@ -224,6 +225,14 @@ const App = () => (
                 element={
                   <ProtectedRoute adminOnly>
                     <OrganizationSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/staff"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <StaffManagement />
                   </ProtectedRoute>
                 }
               />
