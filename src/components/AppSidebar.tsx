@@ -1,114 +1,186 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Ruler, Palette, FolderOpen, BarChart3,
-  LogOut, X, Shield, Settings,
+  LayoutDashboard,
+  Users,
+  Ruler,
+  Palette,
+  FolderOpen,
+  BarChart3,
+  Settings,
+  UserCog,
+  ShieldCheck,
+  LogOut,
+  X,
 } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import fallbackLogo from "@/assets/logo.jpeg";
+
+// ─── Nav items ────────────────────────────────────────────────────────────────
+
+const navItems = [
+  { to: "/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
+  { to: "/customers",    label: "Customers",    icon: Users },
+  { to: "/measurements", label: "Measurements", icon: Ruler },
+  { to: "/designs",      label: "Designs",      icon: Palette },
+  { to: "/categories",   label: "Categories",   icon: FolderOpen },
+];
+
+const adminItems = [
+  { to: "/reports",  label: "Reports",  icon: BarChart3 },
+  { to: "/staff",    label: "Staff",    icon: UserCog },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
+const platformAdminItems = [
+  { to: "/admin", label: "Admin panel", icon: ShieldCheck },
+];
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AppSidebarProps {
   open: boolean;
   onClose: () => void;
+  logoSrc?: string;
 }
 
-const navItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/customers", icon: Users, label: "Customers" },
-  { to: "/measurements", icon: Ruler, label: "Measurements" },
-  { to: "/designs", icon: Palette, label: "Designs" },
-  { to: "/categories", icon: FolderOpen, label: "Categories" },
-];
+// ─── Component ────────────────────────────────────────────────────────────────
 
-const adminItems = [
-  { to: "/reports", icon: BarChart3, label: "Reports" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-];
+const AppSidebar = ({ open, onClose, logoSrc }: AppSidebarProps) => {
+  const { tenant, user, isAdmin, isPlatformAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
 
-const platformAdminItems = [
-  { to: "/admin", icon: Shield, label: "Platform Admin" },
-];
+  const resolvedLogo = logoSrc ?? fallbackLogo;
 
-const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
-  const { isAdmin, isPlatformAdmin, signOut, user, tenant } = useAuth();
-  const location = useLocation();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
-  const allItems = [
-    ...navItems,
-    ...(isAdmin ? adminItems : []),
-    ...(isPlatformAdmin ? platformAdminItems : []),
-  ];
+  const NavItem = ({
+    to,
+    label,
+    icon: Icon,
+  }: {
+    to: string;
+    label: string;
+    icon: React.ElementType;
+  }) => (
+    <NavLink
+      to={to}
+      onClick={onClose}
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+          isActive
+            ? "bg-primary/10 text-primary font-medium"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        )
+      }
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      {label}
+    </NavLink>
+  );
 
   return (
     <>
+      {/* Mobile overlay */}
       {open && (
-        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden" onClick={onClose} />
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onClose}
+        />
       )}
 
+      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-[260px] bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto",
+          "fixed inset-y-0 left-0 z-50 w-60 bg-card border-r border-border flex flex-col transition-transform duration-200 ease-in-out",
+          "lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Brand */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Rina's Fit" className="w-10 h-10 rounded-xl object-contain" />
+        {/* Header: tenant branding */}
+        <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img
+              src={resolvedLogo}
+              alt={tenant?.business_name ?? "Rina's Fit"}
+              className="w-7 h-7 rounded-md object-contain border border-border bg-background shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = fallbackLogo;
+              }}
+            />
             <div className="min-w-0">
-              <span className="font-display font-bold text-base text-sidebar-foreground block leading-tight tracking-tight">
-                Rina<span className="text-accent italic">Fit</span>
-              </span>
-              {tenant && (
-                <span className="text-[10px] text-sidebar-foreground/50 truncate block">{tenant.business_name}</span>
-              )}
+              <p className="text-xs font-semibold text-foreground truncate leading-tight">
+                {tenant?.business_name ?? "Rina's Fit"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate leading-tight">
+                Rina's Fit
+              </p>
             </div>
           </div>
-          <button className="lg:hidden text-sidebar-foreground/60 hover:text-sidebar-foreground" onClick={onClose}>
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/35">Menu</p>
-          {allItems.map((item) => {
-            const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-accent/15 text-accent shadow-sm"
-                    : "text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                )}
-              >
-                <item.icon className={cn("w-[18px] h-[18px]", isActive && "text-accent")} />
-                {item.label}
-              </NavLink>
-            );
-          })}
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {navItems.map((item) => (
+            <NavItem key={item.to} {...item} />
+          ))}
+
+          {(isAdmin || isPlatformAdmin) && (
+            <>
+              <div className="pt-3 pb-1">
+                <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider px-3">
+                  Admin
+                </p>
+              </div>
+              {adminItems.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
+            </>
+          )}
+
+          {isPlatformAdmin && (
+            <>
+              <div className="pt-3 pb-1">
+                <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider px-3">
+                  Platform
+                </p>
+              </div>
+              {platformAdminItems.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
+            </>
+          )}
         </nav>
 
-        {/* User / Logout */}
-        <div className="px-3 py-4 border-t border-sidebar-border shrink-0">
-          <div className="px-3 py-2 text-[11px] text-sidebar-foreground/35 truncate mb-1">
-            {user?.email}
+        {/* Footer: user info + sign out */}
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">
+                {user?.email ?? "—"}
+              </p>
+              <p className="text-xs text-muted-foreground capitalize">
+                {isAdmin ? "Admin" : "Staff"}
+              </p>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors shrink-0"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={async () => {
-              await signOut();
-              window.location.href = "/";
-            }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/55 hover:bg-destructive/20 hover:text-destructive transition-colors w-full cursor-pointer"
-          >
-            <LogOut className="w-[18px] h-[18px]" />
-            Logout
-          </button>
         </div>
       </aside>
     </>

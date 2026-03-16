@@ -9,12 +9,15 @@ const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { tenant } = useAuth();
 
-  // Use the tenant's own uploaded logo if available, fall back to the default
   const logoSrc = tenant?.logo_url ?? fallbackLogo;
 
   return (
     <div className="flex h-screen bg-background">
-      <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AppSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        logoSrc={logoSrc}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-14 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-card/80 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3">
@@ -30,9 +33,8 @@ const AppLayout = () => {
                 <img
                   src={logoSrc}
                   alt={tenant.business_name}
-                  className="w-4 h-4 object-contain rounded-sm"
+                  className="w-5 h-5 object-contain rounded-sm"
                   onError={(e) => {
-                    // If the remote logo fails to load, fall back silently
                     (e.currentTarget as HTMLImageElement).src = fallbackLogo;
                   }}
                 />
