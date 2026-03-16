@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
-import { Menu, Bell, Scissors } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import logo from "@/assets/logo.jpeg";
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
