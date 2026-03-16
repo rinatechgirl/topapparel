@@ -24,69 +24,145 @@ import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
+// ─── Route guards ─────────────────────────────────────────────────────────────
+
+/**
+ * Requires authentication. Optionally restricts to admin/platform-admin only.
+ */
+const ProtectedRoute = ({
+  children,
+  adminOnly = false,
+}: {
+  children: React.ReactNode;
+  adminOnly?: boolean;
+}) => {
   const { user, loading, isAdmin, isPlatformAdmin } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
-  if (adminOnly && !isAdmin && !isPlatformAdmin) return <Navigate to="/dashboard" replace />;
+  if (adminOnly && !isAdmin && !isPlatformAdmin)
+    return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
+/**
+ * Requires an authenticated user whose tenant is approved.
+ * Platform admins bypass tenant checks entirely.
+ */
 const TenantGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, tenantId, tenant, isPlatformAdmin } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Platform admins bypass all tenant checks
+  // Platform admins skip all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
 
-  // If on a tenant subdomain, the tenant context may come from the subdomain
   const subdomainSlug = getTenantSlugFromHostname();
 
-  // No tenant assigned and not on a subdomain - redirect to register
-  if (!tenantId && !subdomainSlug) return <Navigate to="/register-business" replace />;
+  // No tenant linked and not on a subdomain → send to registration
+  if (!tenantId && !subdomainSlug)
+    return <Navigate to="/register-business" replace />;
 
-  // Tenant not approved (only check if we have tenant info loaded)
-  if (tenant && tenant.status !== "approved") return <Navigate to="/pending-approval" replace />;
+  // Tenant exists but is not approved
+  if (tenant && tenant.status !== "approved")
+    return <Navigate to="/pending-approval" replace />;
 
-  // If we have tenantId but tenant info hasn't loaded yet, wait
-  if (tenantId && !tenant) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  // Tenant ID is set but info hasn't loaded yet → wait
+  if (tenantId && !tenant)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
 
   return <>{children}</>;
 };
 
+/**
+ * Restricts access to platform admins only.
+ */
 const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isPlatformAdmin } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
   if (!isPlatformAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
+/**
+ * Registration guard.
+ *
+ * Allows BOTH unauthenticated users (creating a brand-new account)
+ * AND authenticated users who don't have a tenant yet.
+ *
+ * Blocks:
+ * - Platform admins (send to /admin)
+ * - Authenticated users who already have a tenant (send to /dashboard)
+ */
+const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isPlatformAdmin, tenantId } = useAuth();
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
+  if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+  if (user && tenantId) return <Navigate to="/dashboard" replace />;
+  // ↑ Unauthenticated users are allowed through — TenantRegister handles signup
+  return <>{children}</>;
+};
+
+/**
+ * Auth page gate.
+ * Redirects already-signed-in users away from the login page.
+ */
 const AuthGate = () => {
   const { user, loading, isPlatformAdmin } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
   if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Auth />;
 };
 
+/**
+ * Landing page gate.
+ * Redirects signed-in users straight to their dashboard.
+ */
 const LandingGate = () => {
   const { user, loading, isPlatformAdmin } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
   if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Landing />;
 };
 
-const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isPlatformAdmin, tenantId } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (isPlatformAdmin) return <Navigate to="/admin" replace />;
-  if (tenantId) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
-};
+// ─── App ──────────────────────────────────────────────────────────────────────
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -96,22 +172,71 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<LandingGate />} />
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/register-business" element={<RegisterGuard><TenantRegister /></RegisterGuard>} />
-            <Route path="/pending-approval" element={<ProtectedRoute><PendingApproval /></ProtectedRoute>} />
-            <Route element={<TenantGuard><AppLayout /></TenantGuard>}>
+
+            {/* Business registration — open to unauthenticated users */}
+            <Route
+              path="/register-business"
+              element={
+                <RegisterGuard>
+                  <TenantRegister />
+                </RegisterGuard>
+              }
+            />
+
+            {/* Pending approval — shown when tenant status ≠ approved */}
+            <Route
+              path="/pending-approval"
+              element={
+                <ProtectedRoute>
+                  <PendingApproval />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Authenticated + tenant-scoped routes */}
+            <Route
+              element={
+                <TenantGuard>
+                  <AppLayout />
+                </TenantGuard>
+              }
+            >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
               <Route path="/designs" element={<Designs />} />
               <Route path="/categories" element={<Categories />} />
-              <Route path="/reports" element={<ProtectedRoute adminOnly><Reports /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute adminOnly><OrganizationSettings /></ProtectedRoute>} />
-              <Route path="/admin" element={<PlatformAdminRoute><AdminPanel /></PlatformAdminRoute>} />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <OrganizationSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <PlatformAdminRoute>
+                    <AdminPanel />
+                  </PlatformAdminRoute>
+                }
+              />
             </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
