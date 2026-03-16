@@ -62,9 +62,7 @@ const Auth = () => {
         
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 w-full">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-14 h-14 rounded-2xl bg-accent/20 backdrop-blur-sm flex items-center justify-center border border-accent/30">
-              <Scissors className="w-7 h-7 text-accent" />
-            </div>
+            <img src={logo} alt="Rina's Fit" className="w-16 h-16 rounded-2xl object-contain" />
           </div>
           <h1 className="text-5xl xl:text-6xl font-display font-bold text-sidebar-foreground leading-tight tracking-tight mb-2">
             Rina<span className="text-accent italic">Fit</span>
