@@ -23,7 +23,7 @@ const AppLayout = () => {
             </button>
             {tenant && (
               <span className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Scissors className="w-3.5 h-3.5 text-accent" />
+                <img src={logo} alt="Rina's Fit" className="w-4 h-4 object-contain" />
                 {tenant.business_name}
               </span>
             )}
