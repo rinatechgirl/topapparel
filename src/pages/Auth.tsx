@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowRight, Scissors } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);

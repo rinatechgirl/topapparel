@@ -2,8 +2,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, Users, Ruler, Palette, FolderOpen, BarChart3,
-  LogOut, X, Shield, Settings, Scissors,
+  LogOut, X, Shield, Settings,
 } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {

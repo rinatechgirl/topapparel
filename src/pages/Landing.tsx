@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Scissors, Ruler, Users, Palette, Shield, Globe, ArrowRight } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { motion } from "framer-motion";
 
 const features = [
