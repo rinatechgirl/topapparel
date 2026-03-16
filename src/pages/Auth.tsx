@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import fallbackLogo from "@/assets/logo.jpeg";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -72,30 +72,104 @@ function TenantLogin({ slug }: { slug: string }) {
   // Slug exists in URL but no matching tenant in DB
   if (notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-5 max-w-sm">
-          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto text-2xl">
-            🔍
+      <div className="min-h-screen bg-background flex flex-col">
+
+        {/* Minimal nav */}
+        <nav className="h-14 border-b border-border flex items-center px-6">
+          <img src={fallbackLogo} alt="Rina's Fit" className="w-7 h-7 object-contain rounded-sm" />
+        </nav>
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+
+          {/* Illustration — three abstract figures like SelPay's 404 */}
+          <div className="relative w-64 h-44 mb-8 select-none">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              {/* Ground shadow */}
+              <ellipse cx="130" cy="168" rx="90" ry="8" fill="currentColor" className="text-muted/40"/>
+
+              {/* Left figure */}
+              <circle cx="52" cy="54" r="16" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="38" y="72" width="28" height="38" rx="8" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="34" y="112" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="54" y="112" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30"/>
+              {/* Left figure arm raised */}
+              <rect x="24" y="74" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30" transform="rotate(-30 30 74)"/>
+
+              {/* Right figure */}
+              <circle cx="208" cy="54" r="16" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="194" y="72" width="28" height="38" rx="8" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="190" y="112" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30"/>
+              <rect x="210" y="112" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30"/>
+              {/* Right figure arm raised */}
+              <rect x="220" y="74" width="12" height="30" rx="6" fill="currentColor" className="text-muted-foreground/30" transform="rotate(30 226 74)"/>
+
+              {/* Centre: large "?" symbol */}
+              <rect x="95" y="30" width="70" height="90" rx="14" fill="currentColor" className="text-primary/15"/>
+              <text
+                x="130"
+                y="92"
+                textAnchor="middle"
+                fontSize="56"
+                fontWeight="700"
+                fill="currentColor"
+                className="text-primary/40"
+                fontFamily="sans-serif"
+              >?</text>
+
+              {/* Small speech bubble above left figure */}
+              <rect x="60" y="22" width="36" height="20" rx="6" fill="currentColor" className="text-muted-foreground/20"/>
+              <polygon points="70,42 76,50 82,42" fill="currentColor" className="text-muted-foreground/20"/>
+              <text x="78" y="36" textAnchor="middle" fontSize="9" fill="currentColor" className="text-muted-foreground/60" fontFamily="sans-serif">hmm</text>
+            </svg>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Organisation not found</h1>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              <strong className="text-foreground">{slug}</strong> doesn't match any registered
-              business. Check the URL or go back to the main login.
-            </p>
+
+          {/* Heading */}
+          <h1 className="text-2xl font-semibold text-foreground">
+            Sorry, organisation not found!
+          </h1>
+
+          {/* Subtext — mirrors SelPay's message style */}
+          <p className="text-sm text-muted-foreground mt-3 max-w-sm leading-relaxed">
+            Looks like{" "}
+            <span className="font-semibold text-foreground">{slug}.rinasfit.com</span>{" "}
+            doesn't exist. Please check the link, or contact the business owner to get
+            the correct address.
+          </p>
+
+          {/* Divider */}
+          <div className="w-16 h-px bg-border my-6" />
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Button
+              onClick={() =>
+                IS_DEV
+                  ? navigate("/auth")
+                  : (window.location.href = `https://${BASE_DOMAIN}/auth`)
+              }
+            >
+              Sign in to your organisation
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                IS_DEV
+                  ? navigate("/register-business")
+                  : (window.location.href = `https://${BASE_DOMAIN}/register-business`)
+              }
+            >
+              Create an account
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() =>
-              IS_DEV
-                ? navigate("/auth")
-                : (window.location.href = `https://${BASE_DOMAIN}/auth`)
-            }
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Main login
-          </Button>
         </div>
+
+        {/* Footer */}
+        <footer className="h-12 border-t border-border flex items-center justify-center">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Rina's Fit. All rights reserved.
+          </p>
+        </footer>
       </div>
     );
   }
