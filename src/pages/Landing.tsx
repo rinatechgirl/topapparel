@@ -1,223 +1,259 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Scissors, Ruler, Users, Palette, Shield, Globe, ArrowRight } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
-import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Users,
+  Ruler,
+  Palette,
+  BarChart3,
+  Shield,
+  Globe,
+} from "lucide-react";
+import fallbackLogo from "@/assets/logo.jpeg";
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const features = [
-  { icon: Users, title: "Customer Management", desc: "Organize client profiles, contact info, and history in one place." },
-  { icon: Ruler, title: "Smart Measurements", desc: "Dynamic measurement forms that adapt to outfit types — gowns, suits, native wear & more." },
-  { icon: Palette, title: "Design Catalogue", desc: "Upload front & back views, categorize by gender and style, build your lookbook." },
-  { icon: Shield, title: "Tenant Isolation", desc: "Every business gets its own secure workspace. Your data stays yours." },
-  { icon: Globe, title: "Custom Subdomain", desc: "Get your own branded URL like yourbrand.rinasfit.com — instant credibility." },
-  { icon: Scissors, title: "Role-Based Access", desc: "Assign Admin, Staff, or Viewer roles to control who sees and does what." },
+  {
+    icon: Users,
+    title: "Customer management",
+    description:
+      "Store customer profiles, contact details, and full history in one place. Search and filter instantly.",
+  },
+  {
+    icon: Ruler,
+    title: "Precision measurements",
+    description:
+      "Record 25+ body measurements per customer, organised by outfit type for quick access.",
+  },
+  {
+    icon: Palette,
+    title: "Design library",
+    description:
+      "Upload front and back view photos for every design, organised by gender and category.",
+  },
+  {
+    icon: BarChart3,
+    title: "Reports & insights",
+    description:
+      "Track business performance with admin-only reports — customers, designs, and activity over time.",
+  },
+  {
+    icon: Shield,
+    title: "Role-based access",
+    description:
+      "Invite staff, assign admin or staff roles, and control exactly what each person can see and do.",
+  },
+  {
+    icon: Globe,
+    title: "Your own branded portal",
+    description:
+      "Every business gets its own login page at yourname.rinasfit.com, with your logo and colours.",
+  },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, delay: i * 0.1, ease: "easeOut" as const },
-  }),
-};
+const steps = [
+  {
+    number: "01",
+    title: "Create your account",
+    description:
+      "Sign up with your business name and choose your username — this becomes your unique subdomain.",
+  },
+  {
+    number: "02",
+    title: "Set up your portal",
+    description:
+      "Upload your logo, add your business details, and invite your team members.",
+  },
+  {
+    number: "03",
+    title: "Start managing",
+    description:
+      "Add customers, record measurements, upload designs, and run your business from one dashboard.",
+  },
+];
 
-const stagger = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
-};
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const Landing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* Nav */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
-      >
-        <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
-          <div className="flex items-center gap-2.5">
-            <img src={logo} alt="Rina's Fit" className="w-9 h-9 rounded-xl object-contain" />
-            <span className="font-display font-bold text-lg tracking-tight">
-              Rina's<span className="text-accent italic">Fit</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>Sign In</Button>
-            <Button size="sm" onClick={() => navigate("/auth")} className="gap-1.5">
-              Get Started <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      </motion.nav>
+    <div className="min-h-screen bg-background">
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/3" />
-        <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-24 lg:pt-28 lg:pb-32">
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6 border border-accent/20"
-            >
-              <Scissors className="w-3.5 h-3.5" /> Multi-tenant SaaS for Fashion Businesses
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-tight tracking-tight mb-6"
-            >
-              Your tailoring business,{" "}
-              <span className="text-accent italic">beautifully managed.</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10"
-            >
-              RinaFit gives every fashion business its own workspace to manage customers, measurements, and designs — all under your branded subdomain.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Button size="lg" onClick={() => navigate("/auth")} className="gap-2 text-base px-8 h-12">
-                Register Your Business <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="lg" onClick={() => navigate("/auth")} className="text-base px-8 h-12">
-                Sign In
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 lg:py-28 border-t border-border/50">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            custom={0}
-            className="text-center mb-14"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold mb-3">Everything you need to run your fashion business</h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">From customer intake to design cataloguing — one platform, zero headaches.</p>
-          </motion.div>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={stagger}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                variants={fadeUp}
-                custom={i}
-                className="group p-6 rounded-2xl border border-border/50 bg-card hover:shadow-lg hover:border-accent/20 transition-all duration-300"
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              >
-                <div className="w-11 h-11 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/15 transition-colors">
-                  <f.icon className="w-5 h-5 text-accent" />
-                </div>
-                <h3 className="font-display font-semibold text-lg mb-1.5">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="py-20 lg:py-28 bg-muted/50 border-t border-border/50">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-            className="text-3xl sm:text-4xl font-display font-bold mb-14"
-          >
-            Get started in 3 steps
-          </motion.h2>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={stagger}
-            className="grid sm:grid-cols-3 gap-10"
-          >
-            {[
-              { step: "1", title: "Register", desc: "Sign up and fill in your business details." },
-              { step: "2", title: "Get Approved", desc: "Our team reviews and activates your account." },
-              { step: "3", title: "Start Managing", desc: "Access your dashboard at yourbrand.rinasfit.com." },
-            ].map((s, i) => (
-              <motion.div key={s.step} variants={fadeUp} custom={i} className="flex flex-col items-center">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-display font-bold mb-4"
-                >
-                  {s.step}
-                </motion.div>
-                <h3 className="font-display font-semibold text-lg mb-1">{s.title}</h3>
-                <p className="text-sm text-muted-foreground">{s.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.4 }}
-        variants={fadeUp}
-        custom={0}
-        className="py-20 lg:py-24 border-t border-border/50"
-      >
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">Ready to grow your fashion business?</h2>
-          <p className="text-muted-foreground text-lg mb-8">Join RinaFit and give your tailoring business the tools it deserves.</p>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Button size="lg" onClick={() => navigate("/auth")} className="gap-2 text-base px-10 h-12">
-              Get Started Free <ArrowRight className="w-4 h-4" />
-            </Button>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="border-t border-border/50 py-8"
-      >
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+      {/* ── Navbar ──────────────────────────────────────────────────────────── */}
+      <nav className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="Rina's Fit" className="w-5 h-5 object-contain" />
-            <span className="font-display font-semibold text-foreground">Rina's Fit</span>
+            <img
+              src={fallbackLogo}
+              alt="Rina's Fit"
+              className="w-7 h-7 object-contain rounded-sm"
+            />
+            <span className="font-semibold text-sm text-foreground">Rina's Fit</span>
           </div>
-          <p>© {new Date().getFullYear()} RinaFit. All rights reserved.</p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+              Log in
+            </Button>
+            <Button size="sm" onClick={() => navigate("/register-business")}>
+              Create account
+            </Button>
+          </div>
         </div>
-      </motion.footer>
+      </nav>
+
+      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-24 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted text-xs text-muted-foreground mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          Multi-tenant platform for tailoring businesses
+        </div>
+
+        <h1 className="text-4xl sm:text-5xl font-semibold text-foreground leading-tight max-w-3xl mx-auto">
+          The modern platform for managing your tailoring business
+        </h1>
+
+        <p className="text-muted-foreground mt-6 text-lg max-w-xl mx-auto leading-relaxed">
+          Customers, measurements, and designs — all in one place, with your
+          own branded portal at{" "}
+          <span className="text-foreground font-medium">yourname.rinasfit.com</span>.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
+          <Button
+            size="lg"
+            className="w-full sm:w-auto"
+            onClick={() => navigate("/register-business")}
+          >
+            Get started free
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => navigate("/auth")}
+          >
+            Sign in to your account
+          </Button>
+        </div>
+      </section>
+
+      {/* ── Features grid ───────────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-semibold text-foreground">
+            Everything your tailoring business needs
+          </h2>
+          <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
+            Built specifically for tailoring and fashion businesses — no bloat, no unnecessary complexity.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className="p-6 rounded-xl border border-border bg-card hover:border-foreground/20 transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center mb-4 group-hover:bg-muted/70 transition-colors">
+                  <Icon className="w-4 h-4 text-foreground" />
+                </div>
+                <h3 className="font-medium text-foreground mb-1.5">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── How it works ────────────────────────────────────────────────────── */}
+      <section className="border-y border-border bg-muted/20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Up and running in minutes
+            </h2>
+            <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
+              No technical setup required — just create your account and start managing.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {steps.map((step) => (
+              <div key={step.number} className="text-center space-y-3">
+                <div className="text-4xl font-semibold text-foreground/10 select-none">
+                  {step.number}
+                </div>
+                <h3 className="font-medium text-foreground">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Subdomain showcase ──────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20 text-center">
+        <h2 className="text-2xl font-semibold text-foreground">
+          Your own branded login page
+        </h2>
+        <p className="text-muted-foreground mt-3 text-sm max-w-lg mx-auto leading-relaxed">
+          Every business on Rina's Fit gets its own subdomain. Your clients and
+          staff log in at a page that shows your logo and business name — not ours.
+        </p>
+
+        {/* Subdomain preview pill */}
+        <div className="inline-flex items-center gap-2 mt-8 px-4 py-2.5 bg-muted rounded-xl border border-border text-sm font-mono">
+          <span className="text-muted-foreground">https://</span>
+          <span className="text-foreground font-semibold">yourbusiness</span>
+          <span className="text-muted-foreground">.rinasfit.com</span>
+        </div>
+      </section>
+
+      {/* ── CTA banner ──────────────────────────────────────────────────────── */}
+      <section className="border-t border-border bg-muted/30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 text-center">
+          <h2 className="text-2xl font-semibold text-foreground">
+            Ready to run your tailoring business smarter?
+          </h2>
+          <p className="text-muted-foreground mt-3 text-sm max-w-sm mx-auto">
+            Set up your account in minutes. No credit card required.
+          </p>
+          <Button
+            size="lg"
+            className="mt-8"
+            onClick={() => navigate("/register-business")}
+          >
+            Create your free account
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </section>
+
+      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <img
+              src={fallbackLogo}
+              alt="Rina's Fit"
+              className="w-5 h-5 object-contain"
+            />
+            <span className="text-sm text-muted-foreground">Rina's Fit</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Rina's Fit. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
