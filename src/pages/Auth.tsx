@@ -86,11 +86,9 @@ const Auth = () => {
           {/* Mobile branding */}
           <div className="lg:hidden text-center mb-10">
             <div className="inline-flex items-center gap-3 mb-1">
-              <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center">
-                <Scissors className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img src={logo} alt="Rina's Fit" className="w-11 h-11 rounded-xl object-contain" />
               <span className="font-display font-bold text-2xl text-foreground">
-                Rina<span className="text-accent italic">Fit</span>
+                Rina's<span className="text-accent italic">Fit</span>
               </span>
             </div>
           </div>

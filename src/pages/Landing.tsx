@@ -212,8 +212,8 @@ const Landing = () => {
       >
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Scissors className="w-4 h-4 text-accent" />
-            <span className="font-display font-semibold text-foreground">RinaFit</span>
+            <img src={logo} alt="Rina's Fit" className="w-5 h-5 object-contain" />
+            <span className="font-display font-semibold text-foreground">Rina's Fit</span>
           </div>
           <p>© {new Date().getFullYear()} RinaFit. All rights reserved.</p>
         </div>
