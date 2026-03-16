@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  ReactNode,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import type { User, Session } from "@supabase/supabase-js";
@@ -10,6 +17,7 @@ interface TenantInfo {
   business_name: string;
   slug: string;
   status: string;
+  logo_url?: string | null;
   business_email?: string;
   owner_name?: string;
   phone?: string | null;
@@ -53,25 +61,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
-  // Mutex to prevent concurrent fetchUserContext calls
+  // Prevent concurrent fetchUserContext calls
   const fetchingRef = useRef(false);
+  // Prevent state updates after unmount
+  const mountedRef = useRef(true);
+  // Skip the duplicate initial onAuthStateChange call
   const initializedRef = useRef(false);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const fetchUserContext = async (userId: string) => {
-    // Prevent duplicate simultaneous calls
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
     try {
-      // Try to accept any pending invitation first
       await supabase.rpc("accept_pending_invitation");
 
-      // Check platform admin status
       const { data: isPlatAdmin } = await supabase.rpc("is_platform_admin");
       const platformAdmin = isPlatAdmin === true;
+
+      if (!mountedRef.current) return;
       setIsPlatformAdmin(platformAdmin);
 
-      // Fetch role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role, tenant_id")
@@ -79,7 +95,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .limit(1)
         .maybeSingle();
 
-      const userRole = platformAdmin ? "admin" : ((roleData?.role as AppRole) ?? "staff");
+      const userRole = platformAdmin
+        ? "admin"
+        : ((roleData?.role as AppRole) ?? "staff");
+
+      if (!mountedRef.current) return;
       setRole(userRole);
 
       // Platform admins don't need tenant context
@@ -89,10 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Check if we're on a tenant subdomain
       const subdomainSlug = getTenantSlugFromHostname();
 
-      // Fetch profile for tenant_id
       const { data: profile } = await supabase
         .from("profiles")
         .select("tenant_id")
@@ -101,30 +119,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       let tid = profile?.tenant_id ?? null;
 
-      // If on a subdomain and user has no tenant_id yet, try to resolve from subdomain
+      // Resolve tenant from subdomain if user has no tenant yet
       if (!tid && subdomainSlug) {
         const { data: subdomainTenant } = await supabase
           .from("tenants")
-          .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+          .select(
+            "id, business_name, slug, status, logo_url, business_email, owner_name, phone, address, country, description"
+          )
           .eq("slug", subdomainSlug)
           .maybeSingle();
 
-        if (subdomainTenant) {
+        if (subdomainTenant && mountedRef.current) {
           setTenant(subdomainTenant as TenantInfo);
           setTenantId(subdomainTenant.id);
           return;
         }
       }
 
+      if (!mountedRef.current) return;
       setTenantId(tid);
 
       if (tid) {
         const { data: tenantData } = await supabase
           .from("tenants")
-          .select("id, business_name, slug, status, business_email, owner_name, phone, address, country, description")
+          .select(
+            "id, business_name, slug, status, logo_url, business_email, owner_name, phone, address, country, description"
+          )
           .eq("id", tid)
           .maybeSingle();
-        setTenant(tenantData as TenantInfo | null);
+
+        if (mountedRef.current) {
+          setTenant(tenantData as TenantInfo | null);
+        }
       } else {
         setTenant(null);
       }
@@ -138,37 +164,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Use getSession first, then listen for changes
+    // Bootstrap: get current session once, then listen for changes
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mountedRef.current) return;
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
         await fetchUserContext(session.user.id);
       }
-      setLoading(false);
-      initializedRef.current = true;
+
+      if (mountedRef.current) {
+        setLoading(false);
+        initializedRef.current = true;
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          // Only fetch if already initialized (skip the initial duplicate call)
-          if (initializedRef.current) {
-            await fetchUserContext(session.user.id);
-          }
-        } else {
-          setRole(null);
-          setTenantId(null);
-          setTenant(null);
-          setIsPlatformAdmin(false);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mountedRef.current) return;
+
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Skip the duplicate event fired on initial mount —
+        // getSession() above already handled it.
         if (initializedRef.current) {
+          // Show loading during re-auth context fetch
+          setLoading(true);
+          await fetchUserContext(session.user.id);
+          if (mountedRef.current) setLoading(false);
+        }
+      } else {
+        // Signed out — clear all context
+        setRole(null);
+        setTenantId(null);
+        setTenant(null);
+        setIsPlatformAdmin(false);
+        if (initializedRef.current && mountedRef.current) {
           setLoading(false);
         }
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -178,13 +217,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{
-      user, session, loading, role,
-      isAdmin: role === "admin",
-      isPlatformAdmin,
-      tenantId, tenant,
-      signOut, refreshTenant,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        role,
+        isAdmin: role === "admin",
+        isPlatformAdmin,
+        tenantId,
+        tenant,
+        signOut,
+        refreshTenant,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
