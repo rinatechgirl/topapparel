@@ -2,8 +2,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, Users, Ruler, Palette, FolderOpen, BarChart3,
-  LogOut, X, Shield, Settings, Scissors,
+  LogOut, X, Shield, Settings,
 } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
@@ -53,9 +54,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         {/* Brand */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center border border-accent/30">
-              <Scissors className="w-5 h-5 text-accent" />
-            </div>
+            <img src={logo} alt="Rina's Fit" className="w-10 h-10 rounded-xl object-contain" />
             <div className="min-w-0">
               <span className="font-display font-bold text-base text-sidebar-foreground block leading-tight tracking-tight">
                 Rina<span className="text-accent italic">Fit</span>

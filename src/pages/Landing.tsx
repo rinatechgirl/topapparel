@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Scissors, Ruler, Users, Palette, Shield, Globe, ArrowRight } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { motion } from "framer-motion";
 
 const features = [
@@ -40,11 +41,9 @@ const Landing = () => {
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Scissors className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="Rina's Fit" className="w-9 h-9 rounded-xl object-contain" />
             <span className="font-display font-bold text-lg tracking-tight">
-              Rina<span className="text-accent italic">Fit</span>
+              Rina's<span className="text-accent italic">Fit</span>
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -213,8 +212,8 @@ const Landing = () => {
       >
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Scissors className="w-4 h-4 text-accent" />
-            <span className="font-display font-semibold text-foreground">RinaFit</span>
+            <img src={logo} alt="Rina's Fit" className="w-5 h-5 object-contain" />
+            <span className="font-display font-semibold text-foreground">Rina's Fit</span>
           </div>
           <p>© {new Date().getFullYear()} RinaFit. All rights reserved.</p>
         </div>

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowRight, Scissors } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -61,9 +62,7 @@ const Auth = () => {
         
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 w-full">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-14 h-14 rounded-2xl bg-accent/20 backdrop-blur-sm flex items-center justify-center border border-accent/30">
-              <Scissors className="w-7 h-7 text-accent" />
-            </div>
+            <img src={logo} alt="Rina's Fit" className="w-16 h-16 rounded-2xl object-contain" />
           </div>
           <h1 className="text-5xl xl:text-6xl font-display font-bold text-sidebar-foreground leading-tight tracking-tight mb-2">
             Rina<span className="text-accent italic">Fit</span>
@@ -87,11 +86,9 @@ const Auth = () => {
           {/* Mobile branding */}
           <div className="lg:hidden text-center mb-10">
             <div className="inline-flex items-center gap-3 mb-1">
-              <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center">
-                <Scissors className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img src={logo} alt="Rina's Fit" className="w-11 h-11 rounded-xl object-contain" />
               <span className="font-display font-bold text-2xl text-foreground">
-                Rina<span className="text-accent italic">Fit</span>
+                Rina's<span className="text-accent italic">Fit</span>
               </span>
             </div>
           </div>
