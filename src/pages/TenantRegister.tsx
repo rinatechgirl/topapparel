@@ -270,13 +270,19 @@ const TenantRegister = () => {
 
       toast.success("Business account created! Redirecting to your dashboard…");
 
-      // ── Step 7: Redirect to their subdomain ───────────────────────────────
+      // ── Step 7: Force session refresh ────────────────────────────────────
+      // After writing to profiles + user_roles, we MUST refresh the session.
+      // This triggers onAuthStateChange in useAuth, which re-runs
+      // fetchUserContext and loads the new tenant_id + admin role.
+      // Without this, the user arrives at /dashboard with no tenant context
+      // and gets bounced back to /register-business.
+      await supabase.auth.refreshSession();
+
       // Small delay so the toast is readable before navigation
       await new Promise((r) => setTimeout(r, 800));
 
       if (IS_DEV) {
         // On localhost, subdomains don't resolve — go to /dashboard directly.
-        // useAuth will pick up the new tenant via the profiles table.
         navigate("/dashboard", { replace: true });
       } else {
         window.location.href = `https://${cleanSlug}.${BASE_DOMAIN}/dashboard`;
