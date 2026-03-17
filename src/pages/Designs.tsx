@@ -8,8 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Image as ImageIcon, RotateCcw } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Image as ImageIcon, RotateCcw, Globe, EyeOff } from "lucide-react";
 
 interface Design {
   id: string;
@@ -20,6 +21,7 @@ interface Design {
   back_view_image_url: string | null;
   uploaded_by: string | null;
   gender: string | null;
+  is_public: boolean;
   created_at: string;
 }
 interface Category { id: string; name: string; }
@@ -39,6 +41,7 @@ const Designs = () => {
   const [loading, setLoading] = useState(false);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [detailDesign, setDetailDesign] = useState<Design | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchDesigns = async () => {
     let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
@@ -136,7 +139,30 @@ const Designs = () => {
     });
   };
 
-  const getCategoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "Uncategorized";
+  // ── Publish / unpublish toggle ─────────────────────────────────────────────
+  const togglePublish = async (design: Design, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAdmin) return;
+    setTogglingId(design.id);
+
+    const newValue = !design.is_public;
+    const { error } = await supabase
+      .from("designs")
+      .update({ is_public: newValue } as any)
+      .eq("id", design.id);
+
+    setTogglingId(null);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(newValue ? "Published to magazine" : "Removed from magazine");
+      fetchDesigns();
+    }
+  };
+
+  const getCategoryName = (id: string | null) =>
+    categories.find((c) => c.id === id)?.name ?? "Uncategorized";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -151,7 +177,11 @@ const Designs = () => {
               <Button className="gap-2"><Plus className="w-4 h-4" />Add Design</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
-              <DialogHeader><DialogTitle className="font-display">{editingId ? "Edit Design" : "New Design"}</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle className="font-display">
+                  {editingId ? "Edit Design" : "New Design"}
+                </DialogTitle>
+              </DialogHeader>
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">Title *</Label>
@@ -193,7 +223,9 @@ const Designs = () => {
                     <Input type="file" accept="image/*" onChange={(e) => setBackFile(e.target.files?.[0] ?? null)} />
                   </div>
                 </div>
-                <Button type="submit" className="w-full h-11" disabled={loading}>{loading ? "Saving..." : "Save Design"}</Button>
+                <Button type="submit" className="w-full h-11" disabled={loading}>
+                  {loading ? "Saving..." : "Save Design"}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -226,41 +258,120 @@ const Designs = () => {
 
       {/* Design Grid */}
       {designs.length === 0 ? (
-        <Card className="border-border/60"><CardContent className="py-12 text-center text-muted-foreground">No designs found.</CardContent></Card>
+        <Card className="border-border/60">
+          <CardContent className="py-12 text-center text-muted-foreground">No designs found.</CardContent>
+        </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {designs.map((d) => {
             const isFlipped = flippedCards.has(d.id);
+            const isToggling = togglingId === d.id;
             return (
-              <Card key={d.id} className="shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border-border/60" onClick={() => setDetailDesign(d)}>
+              <Card
+                key={d.id}
+                className="shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border-border/60"
+                onClick={() => setDetailDesign(d)}
+              >
                 <div className="aspect-[4/5] bg-muted relative overflow-hidden">
+                  {/* Front view */}
                   <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-0" : "opacity-100"}`}>
-                    {d.image_url ? <img src={d.image_url} alt={`${d.title} - Front`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>}
+                    {d.image_url
+                      ? <img src={d.image_url} alt={`${d.title} - Front`} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /></div>}
                   </div>
+                  {/* Back view */}
                   <div className={`absolute inset-0 transition-opacity duration-500 ${isFlipped ? "opacity-100" : "opacity-0"}`}>
-                    {d.back_view_image_url ? <img src={d.back_view_image_url} alt={`${d.title} - Back`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center flex-col gap-2"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /><span className="text-xs text-muted-foreground/50">No back view</span></div>}
+                    {d.back_view_image_url
+                      ? <img src={d.back_view_image_url} alt={`${d.title} - Back`} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center flex-col gap-2"><ImageIcon className="w-12 h-12 text-muted-foreground/30" /><span className="text-xs text-muted-foreground/50">No back view</span></div>}
                   </div>
+
+                  {/* Flip button */}
                   {(d.image_url || d.back_view_image_url) && (
-                    <button onClick={(e) => toggleFlip(d.id, e)} className="absolute bottom-2 left-2 z-10 bg-card/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" title={isFlipped ? "Show front" : "Show back"}>
+                    <button
+                      onClick={(e) => toggleFlip(d.id, e)}
+                      className="absolute bottom-2 left-2 z-10 bg-card/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title={isFlipped ? "Show front" : "Show back"}
+                    >
                       <RotateCcw className="w-4 h-4 text-foreground" />
                     </button>
                   )}
-                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-card/70 backdrop-blur-sm text-foreground px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity font-medium">{isFlipped ? "Back View" : "Front View"}</span>
+
+                  {/* View label */}
+                  <span className="absolute bottom-2 right-2 z-10 text-[10px] bg-card/70 backdrop-blur-sm text-foreground px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                    {isFlipped ? "Back View" : "Front View"}
+                  </span>
+
+                  {/* Published badge */}
+                  {d.is_public && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <Badge className="bg-green-500/90 text-white text-[10px] px-1.5 py-0.5 gap-1 backdrop-blur-sm">
+                        <Globe className="w-2.5 h-2.5" /> Published
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Admin controls */}
                   {isAdmin && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "", gender: d.gender ?? "Unisex" }); setEditingId(d.id); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                      {/* Publish toggle */}
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        title={d.is_public ? "Remove from magazine" : "Publish to magazine"}
+                        disabled={isToggling}
+                        onClick={(e) => togglePublish(d, e)}
+                      >
+                        {d.is_public
+                          ? <EyeOff className="w-3.5 h-3.5 text-green-600" />
+                          : <Globe className="w-3.5 h-3.5 text-muted-foreground" />}
+                      </Button>
+                      {/* Edit */}
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setForm({ title: d.title, description: d.description ?? "", category_id: d.category_id ?? "", gender: d.gender ?? "Unisex" });
+                          setEditingId(d.id);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      {/* Delete */}
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
                     </div>
                   )}
                 </div>
+
                 <CardContent className="p-4">
                   <p className="font-display font-semibold text-foreground text-sm">{d.title}</p>
                   <div className="flex gap-2 items-center mt-1.5">
                     <p className="text-xs text-accent font-medium">{getCategoryName(d.category_id)}</p>
-                    {d.gender && <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium">{d.gender}</span>}
+                    {d.gender && (
+                      <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium">
+                        {d.gender}
+                      </span>
+                    )}
                   </div>
-                  {d.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{d.description}</p>}
-                  <Button size="sm" className="w-full mt-3 h-9 text-xs font-semibold uppercase tracking-wider" onClick={(e) => { e.stopPropagation(); setDetailDesign(d); }}>
+                  {d.description && (
+                    <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{d.description}</p>
+                  )}
+                  <Button
+                    size="sm"
+                    className="w-full mt-3 h-9 text-xs font-semibold uppercase tracking-wider"
+                    onClick={(e) => { e.stopPropagation(); setDetailDesign(d); }}
+                  >
                     Select Design
                   </Button>
                 </CardContent>
@@ -282,21 +393,35 @@ const Designs = () => {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Front View</p>
                   <div className="aspect-[4/5] bg-muted rounded-lg overflow-hidden">
-                    {detailDesign.image_url ? <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
+                    {detailDesign.image_url
+                      ? <img src={detailDesign.image_url} alt="Front" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Back View</p>
                   <div className="aspect-[4/5] bg-muted rounded-lg overflow-hidden">
-                    {detailDesign.back_view_image_url ? <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
+                    {detailDesign.back_view_image_url
+                      ? <img src={detailDesign.back_view_image_url} alt="Back" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/30" /></div>}
                   </div>
                 </div>
               </div>
               <div className="space-y-2 mt-2">
-                <p className="text-xs text-muted-foreground"><span className="font-semibold">Category:</span> {getCategoryName(detailDesign.category_id)}</p>
-                {detailDesign.gender && <p className="text-xs text-muted-foreground"><span className="font-semibold">Gender:</span> {detailDesign.gender}</p>}
-                {detailDesign.description && <p className="text-sm text-foreground mt-2">{detailDesign.description}</p>}
-                <p className="text-xs text-muted-foreground">Added: {new Date(detailDesign.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-semibold">Category:</span> {getCategoryName(detailDesign.category_id)}
+                </p>
+                {detailDesign.gender && (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold">Gender:</span> {detailDesign.gender}
+                  </p>
+                )}
+                {detailDesign.description && (
+                  <p className="text-sm text-foreground mt-2">{detailDesign.description}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Added: {new Date(detailDesign.created_at).toLocaleDateString()}
+                </p>
               </div>
             </>
           )}
