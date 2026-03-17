@@ -22,6 +22,8 @@ import AdminPanel from "@/pages/AdminPanel";
 import OrganizationSettings from "@/pages/OrganizationSettings";
 import StaffManagement from "@/pages/StaffManagement";
 import Landing from "@/pages/Landing";
+import Magazine from "@/pages/Magazine";
+import Catalogue from "@/pages/Catalogue";
 
 const queryClient = new QueryClient();
 
@@ -177,6 +179,10 @@ const App = () => (
             <Route path="/" element={<LandingGate />} />
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Public magazine and catalogue — no auth required */}
+            <Route path="/magazine" element={<Magazine />} />
+            <Route path="/catalogue" element={<Catalogue />} />
 
             {/* Business registration — open to unauthenticated users */}
             <Route
