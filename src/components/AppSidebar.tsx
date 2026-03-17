@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   LogOut,
   X,
+  Globe,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,7 @@ const navItems = [
   { to: "/measurements", label: "Measurements", icon: Ruler },
   { to: "/designs",      label: "Designs",      icon: Palette },
   { to: "/categories",   label: "Categories",   icon: FolderOpen },
+  { to: "/catalogue",    label: "Our Catalogue", icon: BookOpen },
 ];
 
 const adminItems = [
@@ -134,6 +137,22 @@ const AppSidebar = ({ open, onClose, logoSrc }: AppSidebarProps) => {
           {navItems.map((item) => (
             <NavItem key={item.to} {...item} />
           ))}
+
+          {/* Magazine — external link, visible to all */}
+          <div className="pt-3 pb-1">
+            <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider px-3">
+              Discover
+            </p>
+          </div>
+          <a
+            href="/magazine"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            <Globe className="w-4 h-4 shrink-0" />
+            Fashion Magazine
+          </a>
 
           {(isAdmin || isPlatformAdmin) && (
             <>
