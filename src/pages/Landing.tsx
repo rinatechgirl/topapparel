@@ -92,7 +92,10 @@ const Landing = () => {
             />
             <span className="font-semibold text-sm text-foreground">Rina's Fit</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/magazine")}>
+              Magazine
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
               Log in
             </Button>
