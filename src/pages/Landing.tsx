@@ -286,7 +286,7 @@ export default function Landing() {
 
             {/* Tag */}
             <div className={cn("reveal", heroLoaded && "visible")}>
-              <Tag label="Multi-tenant tailoring platform" />
+              <Tag label="For modern fashion creators" />
             </div>
 
             {/* Headline — dramatic clip-path reveal per line */}
@@ -311,7 +311,7 @@ export default function Landing() {
             {/* Subheadline */}
             <p className={cn("font-body text-base sm:text-lg text-muted-foreground max-w-md leading-relaxed mb-10 reveal d4", heroLoaded && "visible")}>
               Customers, measurements, designs — managed from your own branded portal.
-              Built exclusively for tailoring and fashion businesses across Africa.
+              Built exclusively for tailoring and fashion businesses across the globe.
             </p>
 
             {/* CTAs */}
