@@ -111,7 +111,7 @@ const steps = [
 // Unsplash fashion images — swap these for your own photos later
 // const HERO_IMG    = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80&auto=format&fit=crop";
 const HERO_IMG    = "https://img.freepik.com/premium-photo/two-young-colleagues-standing-by-mannequins-creating-new-clothes_236854-55123.jpg?w=1920&q=80&auto=format&fit=crop";
-const TAILOR_IMG  = "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80&auto=format&fit=crop";
+const TAILOR_IMG  = "https://img.freepik.com/premium-photo/african-american-female-tailor-taking-measurements-dress-mannequin-seamstress-workshop_259150-79859.jpg?w=900&q=80&auto=format&fit=crop";
 const FABRIC_IMG  = "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=700&q=80&auto=format&fit=crop";
 const FASHION_IMG = "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=700&q=80&auto=format&fit=crop";
 
