@@ -13,26 +13,29 @@ import {
   X,
   Globe,
   BookOpen,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 import fallbackLogo from "@/assets/logo.jpeg";
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
 const navItems = [
-  { to: "/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
-  { to: "/customers",    label: "Customers",    icon: Users },
-  { to: "/measurements", label: "Measurements", icon: Ruler },
-  { to: "/designs",      label: "Designs",      icon: Palette },
-  { to: "/categories",   label: "Categories",   icon: FolderOpen },
-  { to: "/catalogue",    label: "Our Catalogue", icon: BookOpen },
+  { to: "/dashboard",    label: "Dashboard",     icon: LayoutDashboard },
+  { to: "/customers",    label: "Customers",     icon: Users           },
+  { to: "/measurements", label: "Measurements",  icon: Ruler           },
+  { to: "/designs",      label: "Designs",       icon: Palette         },
+  { to: "/categories",   label: "Categories",    icon: FolderOpen      },
+  { to: "/catalogue",    label: "Our Catalogue", icon: BookOpen        },
 ];
 
 const adminItems = [
   { to: "/reports",  label: "Reports",  icon: BarChart3 },
-  { to: "/staff",    label: "Staff",    icon: UserCog },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/staff",    label: "Staff",    icon: UserCog   },
+  { to: "/settings", label: "Settings", icon: Settings  },
 ];
 
 const platformAdminItems = [
@@ -51,6 +54,7 @@ interface AppSidebarProps {
 
 const AppSidebar = ({ open, onClose, logoSrc }: AppSidebarProps) => {
   const { tenant, user, isAdmin, isPlatformAdmin, signOut } = useAuth();
+  const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
 
   const resolvedLogo = logoSrc ?? fallbackLogo;
@@ -181,7 +185,7 @@ const AppSidebar = ({ open, onClose, logoSrc }: AppSidebarProps) => {
           )}
         </nav>
 
-        {/* Footer: user info + sign out */}
+        {/* Footer: user info + theme toggle + sign out */}
         <div className="p-3 border-t border-border shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
@@ -192,13 +196,26 @@ const AppSidebar = ({ open, onClose, logoSrc }: AppSidebarProps) => {
                 {isAdmin ? "Admin" : "Staff"}
               </p>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors shrink-0"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Theme toggle */}
+              <button
+                onClick={toggle}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              {/* Sign out */}
+              <button
+                onClick={handleSignOut}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
