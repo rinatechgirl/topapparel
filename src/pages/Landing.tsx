@@ -112,7 +112,7 @@ const steps = [
 // const HERO_IMG    = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80&auto=format&fit=crop";
 const HERO_IMG    = "https://img.freepik.com/premium-photo/two-young-colleagues-standing-by-mannequins-creating-new-clothes_236854-55123.jpg?w=1920&q=80&auto=format&fit=crop";
 const TAILOR_IMG  = "https://i.pinimg.com/474x/6c/30/a6/6c30a6c623055ca6658e1556eb9827d4.jpg?w=900&q=80&auto=format&fit=crop";
-const FABRIC_IMG  = "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=700&q=80&auto=format&fit=crop";
+const FABRIC_IMG  = "https://i.pinimg.com/474x/77/2e/f8/772ef8832e5e77dae19ab81771ff4b4a.jpg?w=700&q=80&auto=format&fit=crop";
 const FASHION_IMG = "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=700&q=80&auto=format&fit=crop";
 
 // ─── Theme toggle button ──────────────────────────────────────────────────────
