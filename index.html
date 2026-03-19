@@ -3,9 +3,12 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- ✅ Google Site Verification -->
-<meta name="google-site-verification" content="EhUaPiRl4wHn7uc_b9S8l__2-L_X2vbOdQW_CXjI7_U" />
-    
+    <!-- Google Site Verification -->
+    <meta
+      name="google-site-verification"
+      content="EhUaPiRl4wHn7uc_b9S8l__2-L_X2vbOdQW_CXjI7_U"
+    />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Rina's Fit - Multi-Tenant Tailoring Platform</title>
@@ -32,7 +35,7 @@
     <!-- Canonical -->
     <link rel="canonical" href="https://rinasfit.com" />
 
-    <!-- ✅ Favicons -->
+    <!-- Favicons (single source of truth) -->
     <link rel="icon" href="/favicon.ico?v=2" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -47,7 +50,7 @@
       rel="stylesheet"
     />
 
-    <!-- Theme bootstrap -->
+    <!-- Theme bootstrap (runs before React) -->
     <script>
       (function () {
         try {
@@ -62,7 +65,32 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <!-- Boot loader prevents blank black screen -->
+    <div id="root">
+      <style>
+        #boot-loader {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0f0f0f;
+          color: #ffffff;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+      </style>
+      <div id="boot-loader">Loading Rina’s Fit…</div>
+    </div>
+
+    <!-- Force reload when restored from bfcache -->
+    <script>
+      window.addEventListener("pageshow", function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+    </script>
+
+    <!-- React entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
