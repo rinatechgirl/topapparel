@@ -247,6 +247,13 @@ export default function Landing() {
                 <XIcon className="w-4 h-4" />
               </button>
             </div>
+            <a
+              href="#about"
+              onClick={() => setMobileNavOpen(false)}
+              className="text-left text-sm text-muted-foreground hover:text-foreground py-3 border-b border-border transition-colors font-body"
+            >
+              About
+            </a>
             <button
               onClick={() => { navigate("/magazine"); setMobileNavOpen(false); }}
               className="text-left text-sm text-muted-foreground hover:text-foreground py-3 border-b border-border transition-colors font-body"
