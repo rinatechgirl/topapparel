@@ -192,6 +192,12 @@ export default function Landing() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
+            <a
+              href="#about"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide font-body"
+            >
+              About
+            </a>
             <button
               onClick={() => navigate("/magazine")}
               className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide font-body"
@@ -241,6 +247,13 @@ export default function Landing() {
                 <XIcon className="w-4 h-4" />
               </button>
             </div>
+            <a
+              href="#about"
+              onClick={() => setMobileNavOpen(false)}
+              className="text-left text-sm text-muted-foreground hover:text-foreground py-3 border-b border-border transition-colors font-body"
+            >
+              About
+            </a>
             <button
               onClick={() => { navigate("/magazine"); setMobileNavOpen(false); }}
               className="text-left text-sm text-muted-foreground hover:text-foreground py-3 border-b border-border transition-colors font-body"
@@ -616,6 +629,65 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ── About the Founder ──────────────────────────────────────────────── */}
+      {(() => {
+        const founderRef = useInView(0.15);
+        return (
+          <section id="about" ref={founderRef.ref} className="border-t border-border scroll-mt-20">
+            <div className="max-w-7xl mx-auto px-6 lg:px-10 py-28 grid lg:grid-cols-[340px_1fr] gap-16 items-start">
+
+              {/* Left — photo + name */}
+              <div className={cn("flex flex-col items-center lg:items-start gap-6 reveal-left", founderRef.inView && "visible")}>
+                <div className="w-48 h-48 rounded-2xl overflow-hidden border border-border shadow-lg">
+                  <img
+                    src={fallbackLogo}
+                    alt="Uzoamaka Favour Oluchi — Rina"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-center lg:text-left">
+                  <h3 className="font-display text-xl font-bold text-foreground">Uzoamaka Favour Oluchi</h3>
+                  <p className="font-body text-sm text-accent font-medium mt-1">Founder — Rina's Fit</p>
+                  <p className="font-body text-xs text-muted-foreground mt-1">Fashion Designer · Tech Enthusiast</p>
+                </div>
+              </div>
+
+              {/* Right — bio */}
+              <div className={cn("reveal-right", founderRef.inView && "visible")}>
+                <Tag label="Meet the founder" />
+                <h2 className="font-display text-4xl font-bold text-foreground leading-tight mb-8">
+                  Bridging fashion<br />
+                  <span className="text-accent italic">& technology.</span>
+                </h2>
+
+                <div className="space-y-5 font-body text-sm text-muted-foreground leading-relaxed max-w-xl">
+                  <p>
+                    My name is <span className="text-foreground font-medium">Uzoamaka Favour Oluchi</span>, popularly known as <span className="text-accent font-semibold">Rina</span>. I am a student of ESTAM University, currently studying in Cotonou, with my roots in Nigeria. I am both a tech enthusiast and a fashion designer, combining creativity with technology to solve real-life problems in the fashion industry.
+                  </p>
+                  <p>
+                    The idea behind Rina's Fit came from my personal experience as a fashion designer. I noticed that most times, it is difficult to fully visualize a dress design, especially when only partial references are available. In addition, recording measurements in notebooks can be stressful and unreliable. There were situations where I was away from home and needed to recall measurements for my sisters, and it required a lot of effort trying to remember or access those details.
+                  </p>
+                  <p>
+                    These challenges inspired me to develop a smarter solution — a web-based system that integrates fashion catalogues with accurate measurement storage. Rina's Fit is designed to help designers organize their work, access customer measurements anytime, and present complete fashion designs clearly.
+                  </p>
+                </div>
+
+                {/* Vision */}
+                <div className="mt-10 border-l-2 border-accent/40 pl-6">
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-3">Vision</h3>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-xl">
+                    My vision is to bridge the gap between fashion and technology by creating simple, accessible, and efficient digital tools that empower fashion designers to work smarter, reduce errors, and deliver better results.
+                  </p>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-xl mt-3">
+                    Through Rina's Fit, I aim to transform the traditional tailoring process into a more structured, reliable, and modern experience.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── CTA ─────────────────────────────────────────────────────────────── */}
       <section ref={ctaRef.ref} className="relative border-t border-border overflow-hidden">
