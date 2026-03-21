@@ -634,7 +634,7 @@ export default function Landing() {
       {(() => {
         const founderRef = useInView(0.15);
         return (
-          <section ref={founderRef.ref} className="border-t border-border">
+          <section id="about" ref={founderRef.ref} className="border-t border-border scroll-mt-20">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 py-28 grid lg:grid-cols-[340px_1fr] gap-16 items-start">
 
               {/* Left — photo + name */}
