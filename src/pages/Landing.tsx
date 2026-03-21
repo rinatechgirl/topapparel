@@ -192,6 +192,12 @@ export default function Landing() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
+            <a
+              href="#about"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide font-body"
+            >
+              About
+            </a>
             <button
               onClick={() => navigate("/magazine")}
               className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide font-body"
