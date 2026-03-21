@@ -102,6 +102,7 @@ export type Database = {
           gender: string | null
           id: string
           image_url: string | null
+          is_public: boolean
           tenant_id: string | null
           title: string
           uploaded_by: string | null
@@ -114,6 +115,7 @@ export type Database = {
           gender?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean
           tenant_id?: string | null
           title: string
           uploaded_by?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           gender?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean
           tenant_id?: string | null
           title?: string
           uploaded_by?: string | null
