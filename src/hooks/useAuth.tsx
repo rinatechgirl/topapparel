@@ -194,6 +194,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // PASSWORD_RECOVERY — flag it in sessionStorage so the ResetPassword
+      // page can pick it up even if its own listener hasn't mounted yet.
+      if (event === "PASSWORD_RECOVERY") {
+        sessionStorage.setItem("rf-password-recovery", "true");
+        setSession(session);
+        setUser(session?.user ?? null);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 

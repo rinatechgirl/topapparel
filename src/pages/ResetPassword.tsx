@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sparkles, CheckCircle, ArrowLeft, Mail } from "lucide-react";
+import { CheckCircle, ArrowLeft, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import fallbackLogo from "@/assets/logo.jpeg";
 
@@ -15,6 +15,7 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [checkingRecovery, setCheckingRecovery] = useState(true);
 
   // Forgot-password request mode
   const [email, setEmail] = useState("");
@@ -23,13 +24,59 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check hash params for recovery token
+    // Check multiple indicators for recovery mode:
+    // 1. Hash params (implicit flow)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    if (hashParams.get("type") === "recovery") setIsRecovery(true);
+    if (hashParams.get("type") === "recovery") {
+      setIsRecovery(true);
+      setCheckingRecovery(false);
+      return;
+    }
 
+    // 2. Query params (PKCE flow sometimes adds type)
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.get("type") === "recovery") {
+      setIsRecovery(true);
+      setCheckingRecovery(false);
+      return;
+    }
+
+    // 3. Check sessionStorage flag set by useAuth when PASSWORD_RECOVERY fires
+    if (sessionStorage.getItem("rf-password-recovery") === "true") {
+      sessionStorage.removeItem("rf-password-recovery");
+      setIsRecovery(true);
+      setCheckingRecovery(false);
+      return;
+    }
+
+    // 4. Listen for the PASSWORD_RECOVERY auth event (may fire after mount)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setIsRecovery(true);
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecovery(true);
+        setCheckingRecovery(false);
+      }
     });
+
+    // 5. If there's a code in the URL, Supabase will exchange it — wait a moment
+    const code = queryParams.get("code");
+    if (code) {
+      // Give Supabase client time to exchange the code and fire the event
+      const timeout = setTimeout(() => {
+        setCheckingRecovery(false);
+        // If we have a session at this point on the reset page with a code, assume recovery
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) setIsRecovery(true);
+        });
+      }, 2000);
+      return () => {
+        clearTimeout(timeout);
+        subscription.unsubscribe();
+      };
+    }
+
+    // No recovery indicators — show the request form
+    setCheckingRecovery(false);
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -62,10 +109,24 @@ const ResetPassword = () => {
 
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) toast.error(error.message);
-    else { setSuccess(true); toast.success("Password updated successfully!"); setTimeout(() => navigate("/"), 2000); }
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setSuccess(true);
+      toast.success("Password updated successfully!");
+      setTimeout(() => navigate("/"), 2000);
+    }
     setLoading(false);
   };
+
+  // ── Loading while checking recovery state ──────────────────────────────────
+  if (checkingRecovery) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-muted-foreground">Verifying reset link…</div>
+      </div>
+    );
+  }
 
   // ── Recovery mode: set new password ─────────────────────────────────────────
   if (isRecovery || success) {
