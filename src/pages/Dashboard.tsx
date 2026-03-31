@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/StatCard";
-import { Users, Palette, FolderOpen, Ruler, UserPlus, FileText, ImagePlus, TrendingUp } from "lucide-react";
+import { Users, Palette, FolderOpen, Ruler, UserPlus, FileText, ImagePlus, TrendingUp, ShoppingBag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
@@ -21,20 +21,21 @@ const CHART_COLORS = [
 
 const Dashboard = () => {
   const { tenant } = useAuth();
-  const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0 });
+  const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0, orders: 0 });
   const [recentMeasurements, setRecentMeasurements] = useState<any[]>([]);
   const [measurementsByMonth, setMeasurementsByMonth] = useState<any[]>([]);
   const [designsByCategory, setDesignsByCategory] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      const [c, d, cat, m] = await Promise.all([
+      const [c, d, cat, m, o] = await Promise.all([
         supabase.from("customers").select("id", { count: "exact", head: true }),
         supabase.from("designs").select("id", { count: "exact", head: true }),
         supabase.from("categories").select("id", { count: "exact", head: true }),
         supabase.from("measurements").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
       ]);
-      setStats({ customers: c.count ?? 0, designs: d.count ?? 0, categories: cat.count ?? 0, measurements: m.count ?? 0 });
+      setStats({ customers: c.count ?? 0, designs: d.count ?? 0, categories: cat.count ?? 0, measurements: m.count ?? 0, orders: o.count ?? 0 });
 
       const { data: recent } = await supabase
         .from("measurements")
@@ -94,11 +95,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Customers" value={stats.customers} icon={Users} />
         <StatCard title="Total Designs" value={stats.designs} icon={Palette} />
         <StatCard title="Categories" value={stats.categories} icon={FolderOpen} />
         <StatCard title="Measurements" value={stats.measurements} icon={Ruler} />
+        <StatCard title="Orders" value={stats.orders} icon={ShoppingBag} />
       </div>
 
       {/* Quick Actions */}

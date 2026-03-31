@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ interface Category { id: string; name: string; }
 
 const Designs = () => {
   const { isAdmin, user, tenantId } = useAuth();
+  const navigate = useNavigate();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
@@ -370,7 +372,7 @@ const Designs = () => {
                   <Button
                     size="sm"
                     className="w-full mt-3 h-9 text-xs font-semibold uppercase tracking-wider"
-                    onClick={(e) => { e.stopPropagation(); setDetailDesign(d); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/designs/${d.id}`); }}
                   >
                     Select Design
                   </Button>

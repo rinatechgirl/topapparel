@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
+import NotificationBell from "./NotificationBell";
 import { Menu, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -48,14 +49,17 @@ const AppLayout = () => {
             )}
           </div>
 
-          {/* Right — theme toggle */}
-          <button
-            onClick={toggle}
-            className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
-            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          {/* Right — notifications + theme toggle */}
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button
+              onClick={toggle}
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">

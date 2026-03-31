@@ -12,6 +12,8 @@ import Customers from "@/pages/Customers";
 import CustomerDetail from "@/pages/CustomerDetail";
 import Measurements from "@/pages/Measurements";
 import Designs from "@/pages/Designs";
+import DesignDetail from "@/pages/DesignDetail";
+import Orders from "@/pages/Orders";
 import Categories from "@/pages/Categories";
 import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
@@ -217,7 +219,8 @@ const App = () => (
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
               <Route path="/designs" element={<Designs />} />
-              <Route path="/categories" element={<Categories />} />
+              <Route path="/designs/:id" element={<DesignDetail />} />
+              <Route path="/orders" element={<Orders />} />
               <Route
                 path="/reports"
                 element={
