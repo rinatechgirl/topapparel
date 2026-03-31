@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/StatCard";
-import { Users, Palette, FolderOpen, Ruler, UserPlus, FileText, ImagePlus, TrendingUp } from "lucide-react";
+import { Users, Palette, FolderOpen, Ruler, UserPlus, FileText, ImagePlus, TrendingUp, ShoppingBag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
