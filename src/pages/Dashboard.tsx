@@ -95,11 +95,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Customers" value={stats.customers} icon={Users} />
         <StatCard title="Total Designs" value={stats.designs} icon={Palette} />
         <StatCard title="Categories" value={stats.categories} icon={FolderOpen} />
         <StatCard title="Measurements" value={stats.measurements} icon={Ruler} />
+        <StatCard title="Orders" value={stats.orders} icon={ShoppingBag} />
       </div>
 
       {/* Quick Actions */}
