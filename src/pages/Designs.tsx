@@ -29,6 +29,7 @@ interface Category { id: string; name: string; }
 
 const Designs = () => {
   const { isAdmin, user, tenantId } = useAuth();
+  const navigate = useNavigate();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
