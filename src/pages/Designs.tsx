@@ -372,7 +372,7 @@ const Designs = () => {
                   <Button
                     size="sm"
                     className="w-full mt-3 h-9 text-xs font-semibold uppercase tracking-wider"
-                    onClick={(e) => { e.stopPropagation(); setDetailDesign(d); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/designs/${d.id}`); }}
                   >
                     Select Design
                   </Button>
