@@ -6,6 +6,7 @@ import {
   Palette,
   FolderOpen,
   BarChart3,
+  ShoppingBag,
   Settings,
   UserCog,
   ShieldCheck,
