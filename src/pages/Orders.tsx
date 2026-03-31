@@ -36,7 +36,7 @@ const Orders = () => {
       .order("created_at", { ascending: false });
 
     if (filterStatus !== "all") {
-      query = query.eq("status", filterStatus);
+      query = query.eq("status", filterStatus as any);
     }
 
     const { data } = await query;
