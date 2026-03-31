@@ -21,7 +21,7 @@ const CHART_COLORS = [
 
 const Dashboard = () => {
   const { tenant } = useAuth();
-  const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0 });
+  const [stats, setStats] = useState({ customers: 0, designs: 0, categories: 0, measurements: 0, orders: 0 });
   const [recentMeasurements, setRecentMeasurements] = useState<any[]>([]);
   const [measurementsByMonth, setMeasurementsByMonth] = useState<any[]>([]);
   const [designsByCategory, setDesignsByCategory] = useState<any[]>([]);
