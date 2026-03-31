@@ -28,13 +28,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [c, d, cat, m] = await Promise.all([
+      const [c, d, cat, m, o] = await Promise.all([
         supabase.from("customers").select("id", { count: "exact", head: true }),
         supabase.from("designs").select("id", { count: "exact", head: true }),
         supabase.from("categories").select("id", { count: "exact", head: true }),
         supabase.from("measurements").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
       ]);
-      setStats({ customers: c.count ?? 0, designs: d.count ?? 0, categories: cat.count ?? 0, measurements: m.count ?? 0 });
+      setStats({ customers: c.count ?? 0, designs: d.count ?? 0, categories: cat.count ?? 0, measurements: m.count ?? 0, orders: o.count ?? 0 });
 
       const { data: recent } = await supabase
         .from("measurements")
