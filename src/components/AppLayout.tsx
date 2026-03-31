@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
+import NotificationBell from "./NotificationBell";
 import { Menu, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
