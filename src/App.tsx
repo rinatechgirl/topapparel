@@ -60,7 +60,7 @@ const ProtectedRoute = ({
  * Platform admins bypass tenant checks entirely.
  */
 const TenantGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, tenantId, tenant, isPlatformAdmin } = useAuth();
+  const { user, loading, tenantId, tenant, isPlatformAdmin, role } = useAuth();
 
   if (loading)
     return (
@@ -69,6 +69,8 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   if (!user) return <Navigate to="/auth" replace />;
+
+  if (role === "customer") return <Navigate to="/designs" replace />;
 
   // Platform admins skip all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
@@ -139,7 +141,7 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
  * Redirects already-signed-in users away from the login page.
  */
 const AuthGate = () => {
-  const { user, loading, isPlatformAdmin } = useAuth();
+  const { user, loading, isPlatformAdmin, role } = useAuth();
   
   if (loading)
     return (
@@ -153,6 +155,7 @@ const AuthGate = () => {
     const returnTo = params.get("returnTo");
     if (returnTo) return <Navigate to={returnTo} replace />;
     if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+    if (role === "customer") return <Navigate to="/designs" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return <Auth />;
@@ -163,7 +166,7 @@ const AuthGate = () => {
  * Redirects signed-in users straight to their dashboard.
  */
 const LandingGate = () => {
-  const { user, loading, isPlatformAdmin } = useAuth();
+  const { user, loading, isPlatformAdmin, role } = useAuth();
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
@@ -171,6 +174,7 @@ const LandingGate = () => {
       </div>
     );
   if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
+  if (user && role === "customer") return <Navigate to="/designs" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Landing />;
 };
