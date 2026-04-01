@@ -26,6 +26,7 @@ import StaffManagement from "@/pages/StaffManagement";
 import Landing from "@/pages/Landing";
 import Magazine from "@/pages/Magazine";
 import Catalogue from "@/pages/Catalogue";
+import PublicLayout from "@/components/PublicLayout";
 
 const queryClient = new QueryClient();
 
