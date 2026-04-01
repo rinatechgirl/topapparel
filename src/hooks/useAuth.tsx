@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "staff";
+type AppRole = "admin" | "staff" | "customer";
 
 interface TenantInfo {
   id: string;
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const userRole = platformAdmin
         ? "admin"
-        : ((roleData?.role as AppRole) ?? "staff");
+        : ((roleData?.role as AppRole | undefined) ?? "customer");
 
       if (!mountedRef.current) return;
       setRole(userRole);

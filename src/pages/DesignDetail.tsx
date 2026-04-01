@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Image as ImageIcon, ShoppingBag } from "lucide-react";
 import OrderPlacementDialog from "@/components/OrderPlacementDialog";
+import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 
 interface Design {
   id: string;
@@ -18,15 +19,18 @@ interface Design {
   gender: string | null;
   is_public: boolean;
   created_at: string;
+  tenant_id: string | null;
 }
 
 const DesignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [design, setDesign] = useState<Design | null>(null);
   const [categoryName, setCategoryName] = useState("Uncategorized");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+  const [tenantSlugForAuth, setTenantSlugForAuth] = useState<string | null>(getTenantSlugFromHostname());
 
   useEffect(() => {
     if (!id) return;
@@ -34,6 +38,17 @@ const DesignDetail = () => {
       const { data } = await supabase.from("designs").select("*").eq("id", id).single();
       if (data) {
         setDesign(data as Design);
+
+        if (!tenantSlugForAuth && data.tenant_id) {
+          const { data: tenantData } = await supabase
+            .from("tenants")
+            .select("slug")
+            .eq("id", data.tenant_id)
+            .maybeSingle();
+
+          if (tenantData?.slug) setTenantSlugForAuth(tenantData.slug);
+        }
+
         if (data.category_id) {
           const { data: cat } = await supabase.from("categories").select("name").eq("id", data.category_id).single();
           if (cat) setCategoryName(cat.name);
@@ -41,7 +56,7 @@ const DesignDetail = () => {
       }
     };
     load();
-  }, [id]);
+  }, [id, tenantSlugForAuth]);
 
   if (!design) return <div className="p-6 text-muted-foreground">Loading design…</div>;
 
@@ -106,7 +121,16 @@ const DesignDetail = () => {
             ) : (
               <Button
                 className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider mt-4"
-                onClick={() => navigate(`/auth?returnTo=/designs/${id}`)}
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    returnTo: `${location.pathname}${location.search}`,
+                    intent: "customer-order",
+                  });
+
+                  if (tenantSlugForAuth) params.set("tenant", tenantSlugForAuth);
+
+                  navigate(`/auth?${params.toString()}`);
+                }}
               >
                 <ShoppingBag className="w-4 h-4" />
                 Sign In to Order This Design
