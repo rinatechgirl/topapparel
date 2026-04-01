@@ -95,13 +95,21 @@ const DesignDetail = () => {
               Added: {new Date(design.created_at).toLocaleDateString()}
             </p>
 
-            {user && (
+            {user ? (
               <Button
                 className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider mt-4"
                 onClick={() => setOrderDialogOpen(true)}
               >
                 <ShoppingBag className="w-4 h-4" />
                 Request / Order This Design
+              </Button>
+            ) : (
+              <Button
+                className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider mt-4"
+                onClick={() => navigate(`/auth?returnTo=/designs/${id}`)}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Sign In to Order This Design
               </Button>
             )}
           </CardContent>
