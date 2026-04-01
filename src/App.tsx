@@ -26,6 +26,7 @@ import StaffManagement from "@/pages/StaffManagement";
 import Landing from "@/pages/Landing";
 import Magazine from "@/pages/Magazine";
 import Catalogue from "@/pages/Catalogue";
+import PublicLayout from "@/components/PublicLayout";
 
 const queryClient = new QueryClient();
 
@@ -139,14 +140,21 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
  */
 const AuthGate = () => {
   const { user, loading, isPlatformAdmin } = useAuth();
+  
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
         Loading…
       </div>
     );
-  if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    // Check for returnTo param to redirect back after login
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("returnTo");
+    if (returnTo) return <Navigate to={returnTo} replace />;
+    if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return <Auth />;
 };
 
@@ -186,6 +194,12 @@ const App = () => (
             <Route path="/magazine" element={<Magazine />} />
             <Route path="/catalogue" element={<Catalogue />} />
 
+            {/* Public design browsing — no auth required */}
+            <Route element={<PublicLayout />}>
+              <Route path="/designs" element={<Designs />} />
+              <Route path="/designs/:id" element={<DesignDetail />} />
+            </Route>
+
             {/* Business registration — open to unauthenticated users */}
             <Route
               path="/register-business"
@@ -218,8 +232,6 @@ const App = () => (
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
-              <Route path="/designs" element={<Designs />} />
-              <Route path="/designs/:id" element={<DesignDetail />} />
               <Route path="/orders" element={<Orders />} />
               <Route
                 path="/reports"
