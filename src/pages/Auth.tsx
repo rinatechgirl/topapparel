@@ -62,8 +62,9 @@ function TenantLogin({ slug }: { slug: string }) {
     if (error) {
       toast.error(error.message);
     } else {
-      // App.tsx AuthGate handles the final redirect (/dashboard or /admin)
-      navigate("/dashboard", { replace: true });
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo");
+      navigate(returnTo || "/dashboard", { replace: true });
     }
   };
 
