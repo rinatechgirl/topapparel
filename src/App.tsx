@@ -140,14 +140,21 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
  */
 const AuthGate = () => {
   const { user, loading, isPlatformAdmin } = useAuth();
+  const [searchParams] = React.lazy ? [] : [];
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
         Loading…
       </div>
     );
-  if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    // Check for returnTo param to redirect back after login
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("returnTo");
+    if (returnTo) return <Navigate to={returnTo} replace />;
+    if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return <Auth />;
 };
 
