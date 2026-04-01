@@ -194,6 +194,12 @@ const App = () => (
             <Route path="/magazine" element={<Magazine />} />
             <Route path="/catalogue" element={<Catalogue />} />
 
+            {/* Public design browsing — no auth required */}
+            <Route element={<PublicLayout />}>
+              <Route path="/designs" element={<Designs />} />
+              <Route path="/designs/:id" element={<DesignDetail />} />
+            </Route>
+
             {/* Business registration — open to unauthenticated users */}
             <Route
               path="/register-business"
