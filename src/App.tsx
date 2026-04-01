@@ -140,7 +140,7 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
  */
 const AuthGate = () => {
   const { user, loading, isPlatformAdmin } = useAuth();
-  const [searchParams] = React.lazy ? [] : [];
+  
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
