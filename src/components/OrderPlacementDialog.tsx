@@ -16,6 +16,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   designId: string;
   designTitle: string;
+  designTenantId?: string | null;
 }
 
 interface CustomerOption {
@@ -31,9 +32,10 @@ interface MeasurementOption {
   date_recorded: string;
 }
 
-const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Props) => {
-  const { user, tenantId, role } = useAuth();
+const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, designTenantId }: Props) => {
+  const { user, tenantId: authTenantId, role } = useAuth();
   const navigate = useNavigate();
+  const effectiveTenantId = designTenantId || authTenantId;
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [measurements, setMeasurements] = useState<MeasurementOption[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
@@ -65,7 +67,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Pro
     if (!open) return;
 
     if (isCustomer) {
-      if (!user || !tenantId) return;
+      if (!user || !effectiveTenantId) return;
 
       const setupCustomer = async () => {
         setCustomerSetupLoading(true);
@@ -73,7 +75,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Pro
         try {
           const customer = await getOrCreateCustomerRecord({
             user,
-            tenantId,
+            tenantId: effectiveTenantId,
             fullName:
               typeof user.user_metadata?.full_name === "string"
                 ? user.user_metadata.full_name
@@ -104,7 +106,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Pro
       setCustomers(data ?? []);
     };
     loadCustomers();
-  }, [open, isCustomer, tenantId, user]);
+  }, [open, isCustomer, effectiveTenantId, user]);
 
   useEffect(() => {
     if (isCustomer) return;
@@ -131,7 +133,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Pro
     setLoading(true);
 
     const payload: Record<string, unknown> = {
-      tenant_id: tenantId,
+      tenant_id: effectiveTenantId,
       customer_id: selectedCustomer,
       design_id: designId,
       measurement_id: selectedMeasurement || null,

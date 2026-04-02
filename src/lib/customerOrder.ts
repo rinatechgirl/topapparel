@@ -47,12 +47,15 @@ export async function ensureCustomerProfile({
 
   const { fullName: safeName } = splitFullName(resolvedName, user.email ?? null);
 
-  const { error } = await supabase.from("profiles").upsert({
-    user_id: user.id,
-    tenant_id: tenantId,
-    email: user.email ?? "",
-    full_name: safeName,
-  } as never);
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      user_id: user.id,
+      tenant_id: tenantId,
+      email: user.email ?? "",
+      full_name: safeName,
+    } as never,
+    { onConflict: "user_id" }
+  );
 
   if (error) throw error;
 }

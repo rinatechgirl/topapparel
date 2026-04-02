@@ -178,6 +178,7 @@ const DesignDetail = () => {
           onOpenChange={setOrderDialogOpen}
           designId={design.id}
           designTitle={design.title}
+          designTenantId={design.tenant_id}
         />
       )}
     </div>
