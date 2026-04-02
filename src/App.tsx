@@ -1,82 +1,138 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import AppLayout from "@/components/AppLayout";
+import PublicLayout from "@/components/PublicLayout";
 
+import Auth from "@/pages/Auth";
+import Landing from "@/pages/Landing";
+import Dashboard from "@/pages/Dashboard";
 import Designs from "@/pages/Designer/Designs";
 import Magazine from "@/pages/Magazine";
-import CustomerOrder from "@/pages/Customer/Order";
+import Orders from "@/pages/Orders";
+import Customers from "@/pages/Customers";
+import Measurements from "@/pages/Measurements";
+import Reports from "@/pages/Reports";
+import OrganizationSettings from "@/pages/OrganizationSettings";
+import StaffManagement from "@/pages/StaffManagement";
+import AdminPanel from "@/pages/AdminPanel";
+import TenantRegister from "@/pages/TenantRegister";
+import PendingApproval from "@/pages/PendingApproval";
+import NotFound from "@/pages/NotFound";
 
-function AppRoutes() {
-  const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<string | null>(null);
+const queryClient = new QueryClient();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+/* ───────────────────────── ROUTE GUARDS ───────────────────────── */
 
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-10 text-center">Loading…</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  return children;
+};
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
+const RequireDesigner = ({ children }: { children: JSX.Element }) => {
+  const { role } = useAuth();
+  if (role === "customer") return <Navigate to="/designs" replace />;
+  return children;
+};
 
-      setRole(profile?.role ?? null);
-      setLoading(false);
-    };
+const RequirePlatformAdmin = ({ children }: { children: JSX.Element }) => {
+  const { isPlatformAdmin } = useAuth();
+  if (!isPlatformAdmin) return <Navigate to="/dashboard" replace />;
+  return children;
+};
 
-    loadUser();
-  }, []);
+const AuthGate = () => {
+  const { user, loading, role, isPlatformAdmin } = useAuth();
+  if (loading) return <div className="p-10 text-center">Loading…</div>;
 
-  if (loading) return null;
+  if (user) {
+    if (isPlatformAdmin) return <Navigate to="/admin" replace />;
+    if (role === "customer") return <Navigate to="/designs" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
 
-  return (
-    <Routes>
-      {/* PUBLIC */}
-      <Route path="/magazine" element={<Magazine />} />
+  return <Auth />;
+};
 
-      {/* DESIGNER */}
-      {role === "designer" && (
-        <Route path="/designer/designs" element={<Designs />} />
-      )}
+/* ───────────────────────── APP ───────────────────────── */
 
-      {/* CUSTOMER */}
-      {role === "customer" && (
-        <Route
-          path="/customer/order/:designId"
-          element={<CustomerOrder />}
-        />
-      )}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<AuthGate />} />
+            <Route path="/magazine" element={<Magazine />} />
 
-      {/* LANDING ONLY */}
-      <Route
-        path="/"
-        element={
-          role === "designer" ? (
-            <Navigate to="/designer/designs" replace />
-          ) : (
-            <Navigate to="/magazine" replace />
-          )
-        }
-      />
+            {/* Public customer browsing */}
+            <Route element={<PublicLayout />}>
+              <Route path="/designs" element={<Magazine />} />
+            </Route>
 
-      {/* 404 – NO FORCED REDIRECT */}
-      <Route path="*" element={<Navigate to="/magazine" replace />} />
-    </Routes>
-  );
-}
+            {/* Business registration */}
+            <Route path="/register-business" element={<TenantRegister />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
-}
+            {/* Authenticated */}
+            <Route
+              element={
+                <RequireAuth>
+                  <AppLayout />
+                </RequireAuth>
+              }
+            >
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireDesigner>
+                    <Dashboard />
+                  </RequireDesigner>
+                }
+              />
+
+              <Route
+                path="/designer/designs"
+                element={
+                  <RequireDesigner>
+                    <Designs />
+                  </RequireDesigner>
+                }
+              />
+
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/measurements" element={<Measurements />} />
+
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<OrganizationSettings />} />
+              <Route path="/staff" element={<StaffManagement />} />
+
+              <Route
+                path="/admin"
+                element={
+                  <RequirePlatformAdmin>
+                    <AdminPanel />
+                  </RequirePlatformAdmin>
+                }
+              />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;

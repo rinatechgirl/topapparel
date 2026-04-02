@@ -1,58 +1,48 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Card } from "@/components/ui/card";
 
-export default function Designs() {
+const Designs = () => {
+  const { tenantId } = useAuth();
   const [designs, setDesigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDesigns = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    if (!tenantId) return;
 
-      if (!user) return;
+    const loadDesigns = async () => {
+      setLoading(true);
 
-      // get designer organization
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.organization_id) return;
-
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("designs")
         .select("*")
-        .eq("organization_id", profile.organization_id) // 🔥 TENANT ISOLATION
+        .eq("tenant_id", tenantId) // 🔐 TENANT ISOLATION
         .order("created_at", { ascending: false });
 
-      setDesigns(data || []);
+      if (!error) setDesigns(data || []);
       setLoading(false);
     };
 
-    fetchDesigns();
-  }, []);
+    loadDesigns();
+  }, [tenantId]);
 
-  if (loading) return <p>Loading designs...</p>;
+  if (loading) return <div className="p-6">Loading designs…</div>;
 
   return (
-    <div>
-      <h1>My Designs</h1>
-
-      {designs.length === 0 && <p>No designs yet.</p>}
-
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
       {designs.map((design) => (
-        <div key={design.id}>
-          <h3>{design.title}</h3>
-          <p>{design.description}</p>
-          <p>
-            Status:{" "}
-            {design.is_public ? "Public (Magazine)" : "Private (Catalogue)"}
-          </p>
-        </div>
+        <Card key={design.id} className="p-4">
+          <img
+            src={design.image_url}
+            alt={design.title}
+            className="rounded-md mb-3"
+          />
+          <h3 className="font-semibold">{design.title}</h3>
+        </Card>
       ))}
     </div>
   );
-}
+};
+
+export default Designs;

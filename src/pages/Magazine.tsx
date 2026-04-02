@@ -1,46 +1,42 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 
-export default function Magazine() {
+const Magazine = () => {
   const [designs, setDesigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPublicDesigns = async () => {
+    const loadPublicDesigns = async () => {
       const { data } = await supabase
         .from("designs")
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          organization:organizations(name)
-        `)
-        .eq("is_public", true) // 🔥 ONLY PUBLIC
+        .select("id, title, image_url")
+        .eq("is_public", true)
         .order("created_at", { ascending: false });
 
       setDesigns(data || []);
+      setLoading(false);
     };
 
-    fetchPublicDesigns();
+    loadPublicDesigns();
   }, []);
 
+  if (loading) return <div className="p-6">Loading catalogue…</div>;
+
   return (
-    <div>
-      <h1>Fashion Magazine</h1>
-
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
       {designs.map((design) => (
-        <div key={design.id}>
-          <img src={design.image_url} alt="" width={200} />
-          <h3>{design.title}</h3>
-          <p>{design.description}</p>
-          <p>Designer: {design.organization?.name}</p>
-
-          <Link to={`/customer/order/${design.id}`}>
-            Place Order
-          </Link>
-        </div>
+        <Card key={design.id} className="p-3">
+          <img
+            src={design.image_url}
+            alt={design.title}
+            className="rounded mb-2"
+          />
+          <p className="text-sm font-medium">{design.title}</p>
+        </Card>
       ))}
     </div>
   );
-}
+};
+
+export default Magazine;
