@@ -5,7 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import MeasurementForm from "@/components/MeasurementForm";
@@ -16,7 +22,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   designId: string;
   designTitle: string;
-  designTenantId?: string | null;
+  designTenantId: string; // 🔒 REQUIRED
 }
 
 interface CustomerOption {
@@ -32,10 +38,21 @@ interface MeasurementOption {
   date_recorded: string;
 }
 
-const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, designTenantId }: Props) => {
+const OrderPlacementDialog = ({
+  open,
+  onOpenChange,
+  designId,
+  designTitle,
+  designTenantId,
+}: Props) => {
   const { user, tenantId: authTenantId, role } = useAuth();
   const navigate = useNavigate();
+
+  // 🔒 HARD TENANT RESOLUTION
   const effectiveTenantId = designTenantId || authTenantId;
+
+  const isCustomer = role === "customer";
+
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [measurements, setMeasurements] = useState<MeasurementOption[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
@@ -46,32 +63,52 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
   const [customerName, setCustomerName] = useState("");
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
 
-  const isCustomer = role === "customer";
+  // ─────────────────────────────────────────────────────────────
+  // HARD SAFETY GUARD (prevents silent FK/RLS failures)
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (open && !effectiveTenantId) {
+      toast.error("Unable to identify the designer for this order.");
+      onOpenChange(false);
+    }
+  }, [open, effectiveTenantId, onOpenChange]);
 
   const loadMeasurements = async (customerId: string, autoSelectLatest = false) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("measurements")
       .select("id, outfit_type, measurement_gender, date_recorded")
       .eq("customer_id", customerId)
       .order("date_recorded", { ascending: false });
 
-    const nextMeasurements = data ?? [];
-    setMeasurements(nextMeasurements);
+    if (error) {
+      toast.error("Failed to load measurements");
+      return;
+    }
 
-    if (autoSelectLatest && nextMeasurements[0]?.id) {
-      setSelectedMeasurement(nextMeasurements[0].id);
+    const list = data ?? [];
+    setMeasurements(list);
+
+    if (autoSelectLatest && list[0]?.id) {
+      setSelectedMeasurement(list[0].id);
     }
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // CUSTOMER AUTO SETUP (PUBLIC FLOW)
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
 
     if (isCustomer) {
-      if (!user || !effectiveTenantId) return;
+      if (!user) {
+        navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+
+      if (!effectiveTenantId) return;
 
       const setupCustomer = async () => {
         setCustomerSetupLoading(true);
-
         try {
           const customer = await getOrCreateCustomerRecord({
             user,
@@ -83,12 +120,18 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
           });
 
           setSelectedCustomer(customer.id);
-          setCustomerName(`${customer.first_name} ${customer.last_name}`.trim());
+          setCustomerName(
+            `${customer.first_name ?? ""} ${customer.last_name ?? ""}`.trim()
+          );
+
           await loadMeasurements(customer.id, true);
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : "We couldn't prepare your order profile.";
-          toast.error(message);
+        } catch (err) {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "We couldn't prepare your customer account"
+          );
+          onOpenChange(false);
         } finally {
           setCustomerSetupLoading(false);
         }
@@ -98,19 +141,29 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
       return;
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // STAFF FLOW (TENANT SCOPED)
+    // ─────────────────────────────────────────────────────────────
     const loadCustomers = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("customers")
         .select("id, first_name, last_name")
+        .eq("tenant_id", effectiveTenantId)
         .order("first_name");
+
+      if (error) {
+        toast.error("Failed to load customers");
+        return;
+      }
+
       setCustomers(data ?? []);
     };
+
     loadCustomers();
-  }, [open, isCustomer, effectiveTenantId, user]);
+  }, [open, isCustomer, effectiveTenantId, user, navigate, onOpenChange]);
 
   useEffect(() => {
     if (isCustomer) return;
-
     if (!selectedCustomer) {
       setMeasurements([]);
       setSelectedMeasurement("");
@@ -119,62 +172,68 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
     loadMeasurements(selectedCustomer);
   }, [isCustomer, selectedCustomer]);
 
+  // ─────────────────────────────────────────────────────────────
+  // ORDER SUBMIT
+  // ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!selectedCustomer) {
-      toast.error(isCustomer ? "We couldn't find your customer profile." : "Please select a customer");
+      toast.error("Customer not resolved");
       return;
     }
 
     if (isCustomer && !selectedMeasurement) {
-      toast.error("Please select an existing measurement or add a new one before placing your order.");
+      toast.error("Please select or add a measurement");
       return;
     }
 
     setLoading(true);
 
-    const payload: Record<string, unknown> = {
+    const { error } = await supabase.from("orders").insert({
       tenant_id: effectiveTenantId,
       customer_id: selectedCustomer,
       design_id: designId,
       measurement_id: selectedMeasurement || null,
       notes: notes.trim() || null,
       created_by: user?.id,
-      status: "pending_price_confirmation" as const,
-    };
+      status: "pending_price_confirmation",
+    });
 
-    const { error } = await supabase.from("orders").insert(payload as any);
+    setLoading(false);
+
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Order placed successfully!");
-      onOpenChange(false);
-      setSelectedCustomer("");
-      setSelectedMeasurement("");
-      setNotes("");
-      if (!isCustomer) navigate("/orders");
+      return;
     }
-    setLoading(false);
+
+    toast.success("Order placed successfully!");
+    onOpenChange(false);
+    setNotes("");
+    setSelectedMeasurement("");
+    if (!isCustomer) navigate("/orders");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display">Order: {designTitle}</DialogTitle>
+          <DialogTitle>Order: {designTitle}</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           {isCustomer ? (
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Customer</Label>
-              <div className="rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-foreground">
-                {customerSetupLoading ? "Preparing your customer profile..." : customerName || user?.email || "Customer"}
+              <Label>Customer</Label>
+              <div className="rounded border p-3 text-sm">
+                {customerSetupLoading ? "Preparing profile..." : customerName}
               </div>
             </div>
           ) : (
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Customer *</Label>
+              <Label>Customer *</Label>
               <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="Select customer" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
                 <SelectContent>
                   {customers.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
@@ -188,50 +247,33 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
 
           {selectedCustomer && !showMeasurementForm && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Existing Measurement {measurements.length === 0 ? "(none found)" : ""}
-                </Label>
-                {isCustomer && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => setShowMeasurementForm(true)}>
-                    Add new measurement
-                  </Button>
-                )}
-              </div>
+              <Label>Measurement</Label>
               {measurements.length > 0 ? (
-                <Select value={selectedMeasurement} onValueChange={setSelectedMeasurement}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder={isCustomer ? "Select measurement" : "Select measurement (optional)"} /></SelectTrigger>
+                <Select
+                  value={selectedMeasurement}
+                  onValueChange={setSelectedMeasurement}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select measurement" />
+                  </SelectTrigger>
                   <SelectContent>
                     {measurements.map((m) => (
                       <SelectItem key={m.id} value={m.id}>
-                        {m.outfit_type ?? "General"} — {new Date(m.date_recorded).toLocaleDateString()}
+                        {m.outfit_type ?? "General"} —{" "}
+                        {new Date(m.date_recorded).toLocaleDateString()}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              ) : isCustomer ? (
-                <p className="text-xs text-muted-foreground">
-                  You haven’t added any measurements yet. Add one now so this order can be tailored correctly.
-                </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  No measurements for this customer.{" "}
-                  <button
-                    type="button"
-                    className="text-primary underline"
-                    onClick={() => {
-                      onOpenChange(false);
-                      navigate(`/customers/${selectedCustomer}`);
-                    }}
-                  >
-                    Add one first
-                  </button>
+                  No measurements yet.
                 </p>
               )}
             </div>
           )}
 
-          {isCustomer && selectedCustomer && showMeasurementForm && (
+          {isCustomer && showMeasurementForm && (
             <MeasurementForm
               customerId={selectedCustomer}
               onClose={() => setShowMeasurementForm(false)}
@@ -243,21 +285,17 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
           )}
 
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Custom Notes (fabric, color, adjustments)
-            </Label>
+            <Label>Notes</Label>
             <Textarea
-              placeholder="E.g., Use blue ankara fabric, add a side slit..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={3}
             />
           </div>
 
           <Button
-            className="w-full h-11"
+            className="w-full"
+            disabled={loading || customerSetupLoading}
             onClick={handleSubmit}
-            disabled={loading || customerSetupLoading || !selectedCustomer || showMeasurementForm}
           >
             {loading ? "Placing Order..." : "Place Order"}
           </Button>
