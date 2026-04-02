@@ -240,6 +240,7 @@ const OrganizationSettings = () => {
         address: form.address.trim() || null,
         country: form.country.trim() || null,
         description: form.description.trim() || null,
+        whatsapp_phone: form.whatsapp_phone.trim() || null,
       } as any)
       .eq("id", tenantId);
 
