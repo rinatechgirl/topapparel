@@ -133,7 +133,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
     setLoading(true);
 
     const payload: Record<string, unknown> = {
-      tenant_id: tenantId,
+      tenant_id: effectiveTenantId,
       customer_id: selectedCustomer,
       design_id: designId,
       measurement_id: selectedMeasurement || null,
