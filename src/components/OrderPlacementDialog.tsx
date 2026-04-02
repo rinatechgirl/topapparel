@@ -32,9 +32,10 @@ interface MeasurementOption {
   date_recorded: string;
 }
 
-const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Props) => {
-  const { user, tenantId, role } = useAuth();
+const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, designTenantId }: Props) => {
+  const { user, tenantId: authTenantId, role } = useAuth();
   const navigate = useNavigate();
+  const effectiveTenantId = designTenantId || authTenantId;
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [measurements, setMeasurements] = useState<MeasurementOption[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
