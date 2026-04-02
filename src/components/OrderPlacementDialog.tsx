@@ -75,7 +75,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
         try {
           const customer = await getOrCreateCustomerRecord({
             user,
-            tenantId,
+            tenantId: effectiveTenantId,
             fullName:
               typeof user.user_metadata?.full_name === "string"
                 ? user.user_metadata.full_name
