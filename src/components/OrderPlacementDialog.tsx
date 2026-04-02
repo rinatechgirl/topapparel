@@ -67,7 +67,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
     if (!open) return;
 
     if (isCustomer) {
-      if (!user || !tenantId) return;
+      if (!user || !effectiveTenantId) return;
 
       const setupCustomer = async () => {
         setCustomerSetupLoading(true);
