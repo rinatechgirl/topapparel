@@ -507,6 +507,17 @@ const OrganizationSettings = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label>WhatsApp Phone</Label>
+                  <Input
+                    placeholder="+2348012345678"
+                    value={form.whatsapp_phone}
+                    onChange={(e) => setForm({ ...form, whatsapp_phone: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Customers will see a "Chat on WhatsApp" button to negotiate pricing. Include country code.
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
                     value={form.description}

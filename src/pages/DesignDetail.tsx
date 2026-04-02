@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Image as ImageIcon, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, ShoppingBag, MessageCircle } from "lucide-react";
 import OrderPlacementDialog from "@/components/OrderPlacementDialog";
 import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 
@@ -22,6 +22,12 @@ interface Design {
   tenant_id: string | null;
 }
 
+interface TenantInfo {
+  slug: string;
+  business_name: string;
+  whatsapp_phone: string | null;
+}
+
 const DesignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,6 +37,7 @@ const DesignDetail = () => {
   const [categoryName, setCategoryName] = useState("Uncategorized");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [tenantSlugForAuth, setTenantSlugForAuth] = useState<string | null>(getTenantSlugFromHostname());
+  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -39,14 +46,17 @@ const DesignDetail = () => {
       if (data) {
         setDesign(data as Design);
 
-        if (!tenantSlugForAuth && data.tenant_id) {
+        if (data.tenant_id) {
           const { data: tenantData } = await supabase
             .from("tenants")
-            .select("slug")
+            .select("slug, business_name, whatsapp_phone")
             .eq("id", data.tenant_id)
             .maybeSingle();
 
-          if (tenantData?.slug) setTenantSlugForAuth(tenantData.slug);
+          if (tenantData) {
+            setTenantInfo(tenantData as TenantInfo);
+            if (!tenantSlugForAuth) setTenantSlugForAuth(tenantData.slug);
+          }
         }
 
         if (data.category_id) {
@@ -57,6 +67,10 @@ const DesignDetail = () => {
     };
     load();
   }, [id, tenantSlugForAuth]);
+
+  const whatsappUrl = tenantInfo?.whatsapp_phone && design
+    ? `https://wa.me/${tenantInfo.whatsapp_phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hello, I'm interested in your design: ${design.title}`)}`
+    : null;
 
   if (!design) return <div className="p-6 text-muted-foreground">Loading design…</div>;
 
@@ -103,6 +117,11 @@ const DesignDetail = () => {
               <Badge variant="secondary">{categoryName}</Badge>
               {design.gender && <Badge variant="outline">{design.gender}</Badge>}
             </div>
+            {tenantInfo && (
+              <p className="text-sm text-muted-foreground">
+                By <span className="font-medium text-foreground">{tenantInfo.business_name}</span>
+              </p>
+            )}
             {design.description && (
               <p className="text-sm text-muted-foreground leading-relaxed">{design.description}</p>
             )}
@@ -110,9 +129,22 @@ const DesignDetail = () => {
               Added: {new Date(design.created_at).toLocaleDateString()}
             </p>
 
+            {/* WhatsApp contact for price negotiation */}
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full h-11 rounded-md border border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400 font-medium text-sm hover:bg-green-500/20 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Chat on WhatsApp to negotiate price
+              </a>
+            )}
+
             {user ? (
               <Button
-                className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider mt-4"
+                className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider"
                 onClick={() => setOrderDialogOpen(true)}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -120,7 +152,7 @@ const DesignDetail = () => {
               </Button>
             ) : (
               <Button
-                className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider mt-4"
+                className="w-full h-12 gap-2 text-sm font-semibold uppercase tracking-wider"
                 onClick={() => {
                   const params = new URLSearchParams({
                     returnTo: `${location.pathname}${location.search}`,

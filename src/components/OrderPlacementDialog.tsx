@@ -137,7 +137,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle }: Pro
       measurement_id: selectedMeasurement || null,
       notes: notes.trim() || null,
       created_by: user?.id,
-      status: "pending" as const,
+      status: "pending_price_confirmation" as const,
     };
 
     const { error } = await supabase.from("orders").insert(payload as any);
