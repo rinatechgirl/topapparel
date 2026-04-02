@@ -13,13 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link } from "react-router-dom";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+  pending_price_confirmation: { label: "Awaiting Price", color: "bg-orange-500/10 text-orange-700 border-orange-200", icon: Clock },
   pending: { label: "Pending", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200", icon: Clock },
   in_progress: { label: "In Progress", color: "bg-blue-500/10 text-blue-700 border-blue-200", icon: Package },
   ready: { label: "Ready", color: "bg-green-500/10 text-green-700 border-green-200", icon: CheckCircle },
   delivered: { label: "Delivered", color: "bg-muted text-muted-foreground border-border", icon: Truck },
 };
 
-const STATUSES = ["pending", "in_progress", "ready", "delivered"] as const;
+const STATUSES = ["pending_price_confirmation", "pending", "in_progress", "ready", "delivered"] as const;
 
 const Orders = () => {
   const { isAdmin, tenantId } = useAuth();
