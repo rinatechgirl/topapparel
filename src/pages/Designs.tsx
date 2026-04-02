@@ -28,7 +28,7 @@ interface Design {
 interface Category { id: string; name: string; }
 
 const Designs = () => {
-  const { isAdmin, user, tenantId, role } = useAuth();
+  const { isAdmin, user, tenantId } = useAuth();
   const navigate = useNavigate();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,59 +45,28 @@ const Designs = () => {
   const [detailDesign, setDetailDesign] = useState<Design | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // Block customers — they should browse Magazine, not this designer page
-  useEffect(() => {
-    if (role === "customer") {
-      navigate("/magazine", { replace: true });
-    }
-  }, [role, navigate]);
-
   const fetchDesigns = async () => {
-    // Always scope to current tenant — never show other tenants' designs
-    if (!tenantId) return;
-
-    let query = supabase
-      .from("designs")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false });
-
-    if (filterCategory && filterCategory !== "all") {
-      query = query.eq("category_id", filterCategory);
-    }
-
-    const { data } = await query;
-    let results = (data as Design[]) ?? [];
-
-    if (search) {
-      const s = search.toLowerCase();
-      results = results.filter(
-        (d) =>
-          d.title.toLowerCase().includes(s) ||
-          d.description?.toLowerCase().includes(s)
-      );
-    }
-
+    let query = supabase.from("designs").select("*").order("created_at", { ascending: false });
+    if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    if (filterCategory && filterCategory !== "all") query = query.eq("category_id", filterCategory);
     if (filterGender && filterGender !== "all") {
-      results = results.filter((d) => d.gender === filterGender);
+      const { data: allData } = await query;
+      const filtered = (allData ?? []).filter((d: any) => d.gender === filterGender);
+      setDesigns(filtered as Design[]);
+      return;
     }
-
-    setDesigns(results);
+    const { data } = await query;
+    setDesigns((data as Design[]) ?? []);
   };
 
   const fetchCategories = async () => {
-    if (!tenantId) return;
-    const { data } = await supabase
-      .from("categories")
-      .select("id, name")
-      .eq("tenant_id", tenantId)
-      .order("name");
+    const { data } = await supabase.from("categories").select("id, name").order("name");
     setCategories(data ?? []);
   };
 
-  useEffect(() => { fetchCategories(); }, [tenantId]);
+  useEffect(() => { fetchCategories(); }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchDesigns(); }, [search, filterCategory, filterGender, tenantId]);
+  useEffect(() => { fetchDesigns(); }, [search, filterCategory, filterGender]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop();
@@ -172,6 +141,7 @@ const Designs = () => {
     });
   };
 
+  // ── Publish / unpublish toggle ─────────────────────────────────────────────
   const togglePublish = async (design: Design, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAdmin) return;
@@ -195,9 +165,6 @@ const Designs = () => {
 
   const getCategoryName = (id: string | null) =>
     categories.find((c) => c.id === id)?.name ?? "Uncategorized";
-
-  // If customer somehow lands here, show nothing while redirecting
-  if (role === "customer") return null;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -349,6 +316,7 @@ const Designs = () => {
                   {/* Admin controls */}
                   {isAdmin && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      {/* Publish toggle */}
                       <Button
                         variant="secondary"
                         size="icon"
@@ -361,6 +329,7 @@ const Designs = () => {
                           ? <EyeOff className="w-3.5 h-3.5 text-green-600" />
                           : <Globe className="w-3.5 h-3.5 text-muted-foreground" />}
                       </Button>
+                      {/* Edit */}
                       <Button
                         variant="secondary"
                         size="icon"
@@ -374,6 +343,7 @@ const Designs = () => {
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
+                      {/* Delete */}
                       <Button
                         variant="secondary"
                         size="icon"
