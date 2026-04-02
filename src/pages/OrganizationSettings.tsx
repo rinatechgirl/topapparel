@@ -56,6 +56,7 @@ const OrganizationSettings = () => {
     address: "",
     country: "",
     description: "",
+    whatsapp_phone: "",
   });
 
   // Load tenant details
