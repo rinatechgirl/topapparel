@@ -32,7 +32,6 @@ const Magazine = () => {
   const [search, setSearch] = useState("");
   const [activeGender, setActiveGender] = useState("All");
   const [detail, setDetail] = useState<PublicDesign | null>(null);
-  const [detailFlipped, setDetailFlipped] = useState(false);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
 
   const genders = ["All", "Female", "Male", "Unisex"];
@@ -116,7 +115,6 @@ const Magazine = () => {
 
   const openDetail = (d: PublicDesign) => {
     setDetail(d);
-    setDetailFlipped(false);
   };
 
   const IS_DEV =
@@ -365,12 +363,21 @@ const Magazine = () => {
                 </Button>
               </div>
 
-              {/* Order CTA */}
+              {/* Order CTA — sends customer to the correct tenant catalogue */}
               <Button
                 className="w-full h-11 mt-3 gap-2 text-sm font-semibold uppercase tracking-wider"
                 onClick={() => {
+                  if (!detail) return;
                   setDetail(null);
-                  navigate(`/designs/${detail.id}`);
+                  // Navigate to the tenant's catalogue with the design pre-selected
+                  const IS_DEV =
+                    window.location.hostname === "localhost" ||
+                    window.location.hostname === "127.0.0.1";
+                  if (IS_DEV) {
+                    navigate(`/catalogue?tenant=${detail.tenant_slug}`);
+                  } else {
+                    window.location.href = `https://${detail.tenant_slug}.rinasfit.com/catalogue`;
+                  }
                 }}
               >
                 Select This Design
