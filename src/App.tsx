@@ -33,7 +33,7 @@ const queryClient = new QueryClient();
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
 /**
- * Requires authentication. Optionally restricts to admin/platform-admin only.
+ * Requires authentication. Optionally restricts to admin only.
  */
 const ProtectedRoute = ({
   children,
@@ -58,6 +58,7 @@ const ProtectedRoute = ({
 /**
  * Requires an authenticated user whose tenant is approved.
  * Platform admins bypass tenant checks entirely.
+ * Customers are NOT sent here — they have their own guard.
  */
 const TenantGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, tenantId, tenant, isPlatformAdmin, role } = useAuth();
@@ -70,10 +71,12 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
     );
   if (!user) return <Navigate to="/auth" replace />;
 
-  if (role === "customer") return <Navigate to="/designs" replace />;
-
   // Platform admins skip all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
+
+  // Customers should never enter the tenant-scoped designer dashboard
+  // Send them to the magazine to browse
+  if (role === "customer") return <Navigate to="/magazine" replace />;
 
   const subdomainSlug = getTenantSlugFromHostname();
 
@@ -97,6 +100,25 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
+ * Guard for customer-only routes.
+ * Requires login. Blocks designers and admins.
+ */
+const CustomerGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, role } = useAuth();
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading…
+      </div>
+    );
+  if (!user) return <Navigate to="/auth" replace />;
+  // Designers and admins should go to their own dashboard
+  if (role !== "customer") return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
+/**
  * Restricts access to platform admins only.
  */
 const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -114,13 +136,8 @@ const PlatformAdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Registration guard.
- *
- * Allows BOTH unauthenticated users (creating a brand-new account)
- * AND authenticated users who don't have a tenant yet.
- *
- * Blocks:
- * - Platform admins (send to /admin)
- * - Authenticated users who already have a tenant (send to /dashboard)
+ * Allows unauthenticated users and authenticated users without a tenant.
+ * Blocks platform admins and users who already have a tenant.
  */
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isPlatformAdmin, tenantId } = useAuth();
@@ -132,38 +149,43 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
     );
   if (isPlatformAdmin) return <Navigate to="/admin" replace />;
   if (user && tenantId) return <Navigate to="/dashboard" replace />;
-  // ↑ Unauthenticated users are allowed through — TenantRegister handles signup
   return <>{children}</>;
 };
 
 /**
  * Auth page gate.
  * Redirects already-signed-in users away from the login page.
+ * Respects ?returnTo= param so customers return to the right page after login.
  */
 const AuthGate = () => {
   const { user, loading, isPlatformAdmin, role } = useAuth();
-  
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
         Loading…
       </div>
     );
+
   if (user) {
-    // Check for returnTo param to redirect back after login
+    // Respect returnTo param — send user back to where they were going
     const params = new URLSearchParams(window.location.search);
     const returnTo = params.get("returnTo");
     if (returnTo) return <Navigate to={returnTo} replace />;
+
     if (isPlatformAdmin) return <Navigate to="/admin" replace />;
-    if (role === "customer") return <Navigate to="/designs" replace />;
+    // Customers go to magazine to browse designs
+    if (role === "customer") return <Navigate to="/magazine" replace />;
+    // Designers and admins go to their dashboard
     return <Navigate to="/dashboard" replace />;
   }
+
   return <Auth />;
 };
 
 /**
  * Landing page gate.
- * Redirects signed-in users straight to their dashboard.
+ * Redirects signed-in users to the right place.
  */
 const LandingGate = () => {
   const { user, loading, isPlatformAdmin, role } = useAuth();
@@ -174,7 +196,9 @@ const LandingGate = () => {
       </div>
     );
   if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
-  if (user && role === "customer") return <Navigate to="/designs" replace />;
+  // Customers go to magazine
+  if (user && role === "customer") return <Navigate to="/magazine" replace />;
+  // Everyone else goes to dashboard
   if (user) return <Navigate to="/dashboard" replace />;
   return <Landing />;
 };
@@ -194,8 +218,10 @@ const App = () => (
             <Route path="/auth" element={<AuthGate />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Public magazine and catalogue — no auth required */}
+            {/* Public magazine — cross-tenant, no auth required */}
             <Route path="/magazine" element={<Magazine />} />
+
+            {/* Public catalogue — tenant storefront, no auth required */}
             <Route path="/catalogue" element={<Catalogue />} />
 
             {/* Public design browsing — no auth required */}
@@ -214,7 +240,7 @@ const App = () => (
               }
             />
 
-            {/* Pending approval — shown when tenant status ≠ approved */}
+            {/* Pending approval */}
             <Route
               path="/pending-approval"
               element={
@@ -224,7 +250,19 @@ const App = () => (
               }
             />
 
-            {/* Authenticated + tenant-scoped routes */}
+            {/* ── Customer-only routes ───────────────────────────────────── */}
+            <Route
+              path="/customer"
+              element={
+                <CustomerGuard>
+                  <AppLayout />
+                </CustomerGuard>
+              }
+            >
+              <Route path="orders" element={<Orders />} />
+            </Route>
+
+            {/* ── Designer / Admin tenant-scoped routes ─────────────────── */}
             <Route
               element={
                 <TenantGuard>
