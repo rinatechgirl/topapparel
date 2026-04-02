@@ -70,6 +70,7 @@ const OrganizationSettings = () => {
         address: (tenant as any).address || "",
         country: (tenant as any).country || "",
         description: (tenant as any).description || "",
+        whatsapp_phone: (tenant as any).whatsapp_phone || "",
       });
     }
   }, [tenant]);
