@@ -455,6 +455,7 @@ export type Database = {
           phone: string | null
           slug: string
           status: Database["public"]["Enums"]["tenant_status"]
+          whatsapp_phone: string | null
         }
         Insert: {
           address?: string | null
@@ -469,6 +470,7 @@ export type Database = {
           phone?: string | null
           slug: string
           status?: Database["public"]["Enums"]["tenant_status"]
+          whatsapp_phone?: string | null
         }
         Update: {
           address?: string | null
@@ -483,6 +485,7 @@ export type Database = {
           phone?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["tenant_status"]
+          whatsapp_phone?: string | null
         }
         Relationships: []
       }
@@ -533,7 +536,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "staff"
-      order_status: "pending" | "in_progress" | "ready" | "delivered"
+      order_status:
+        | "pending_price_confirmation"
+        | "pending"
+        | "in_progress"
+        | "ready"
+        | "delivered"
       tenant_status: "pending" | "approved" | "suspended" | "rejected"
     }
     CompositeTypes: {
@@ -663,7 +671,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
-      order_status: ["pending", "in_progress", "ready", "delivered"],
+      order_status: [
+        "pending_price_confirmation",
+        "pending",
+        "in_progress",
+        "ready",
+        "delivered",
+      ],
       tenant_status: ["pending", "approved", "suspended", "rejected"],
     },
   },
