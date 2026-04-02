@@ -106,7 +106,7 @@ const OrderPlacementDialog = ({ open, onOpenChange, designId, designTitle, desig
       setCustomers(data ?? []);
     };
     loadCustomers();
-  }, [open, isCustomer, tenantId, user]);
+  }, [open, isCustomer, effectiveTenantId, user]);
 
   useEffect(() => {
     if (isCustomer) return;
