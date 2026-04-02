@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { getTenantSlugFromHostname } from "@/hooks/useTenantSlug";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, Image as ImageIcon, RotateCcw, Globe } from "lucide-react";
+import OrderPlacementDialog from "@/components/OrderPlacementDialog";
 import fallbackLogo from "@/assets/logo.jpeg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +28,7 @@ interface PublicDesign {
   back_view_image_url: string | null;
   gender: string | null;
   category_name: string | null;
+  tenant_id: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -33,6 +36,7 @@ interface PublicDesign {
 const Catalogue = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, role } = useAuth();
 
   // Resolve slug from subdomain (production) or ?tenant= param (dev)
   const subdomainSlug = getTenantSlugFromHostname();
@@ -48,6 +52,10 @@ const Catalogue = () => {
   const [activeGender, setActiveGender] = useState("All");
   const [detail, setDetail] = useState<PublicDesign | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+
+  // Order dialog state
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<PublicDesign | null>(null);
 
   const genders = ["All", "Female", "Male", "Unisex"];
 
@@ -87,6 +95,7 @@ const Catalogue = () => {
           image_url,
           back_view_image_url,
           gender,
+          tenant_id,
           categories ( name )
         `)
         .eq("tenant_id", tenantData.id)
@@ -101,6 +110,7 @@ const Catalogue = () => {
         back_view_image_url: d.back_view_image_url,
         gender: d.gender,
         category_name: d.categories?.name ?? null,
+        tenant_id: d.tenant_id,
       }));
 
       setDesigns(mapped);
@@ -134,6 +144,21 @@ const Catalogue = () => {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  // Handle "Book this design" click
+  const handleBookDesign = (design: PublicDesign) => {
+    setDetail(null);
+
+    if (!user) {
+      // Not logged in — send to auth with returnTo so they come back here
+      navigate(`/auth?returnTo=/catalogue${slug ? `?tenant=${slug}` : ""}`);
+      return;
+    }
+
+    // Customer is logged in — open order dialog
+    setSelectedDesign(design);
+    setOrderDialogOpen(true);
   };
 
   // ── Not found ──────────────────────────────────────────────────────────────
@@ -194,13 +219,19 @@ const Catalogue = () => {
                 </div>
               </div>
               <div className="shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/auth`)}
-                >
-                  Sign in to book
-                </Button>
+                {user ? (
+                  <span className="text-xs text-muted-foreground">
+                    Signed in as {user.email}
+                  </span>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/auth?returnTo=/catalogue${slug ? `?tenant=${slug}` : ""}`)}
+                  >
+                    Sign in to book
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -350,13 +381,28 @@ const Catalogue = () => {
                   <p className="text-sm text-foreground mt-2">{detail.description}</p>
                 )}
               </div>
-              <Button className="w-full mt-4" onClick={() => navigate("/auth")}>
-                Book this design
+              {/* Book button — handles auth check internally */}
+              <Button
+                className="w-full mt-4 h-11"
+                onClick={() => handleBookDesign(detail)}
+              >
+                {user ? "Book this design" : "Sign in to book"}
               </Button>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Order placement dialog ────────────────────────────────────────────── */}
+      {selectedDesign && tenant && (
+        <OrderPlacementDialog
+          open={orderDialogOpen}
+          onOpenChange={setOrderDialogOpen}
+          designId={selectedDesign.id}
+          designTitle={selectedDesign.title}
+          designTenantId={tenant.id}
+        />
+      )}
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <footer className="border-t border-border">
