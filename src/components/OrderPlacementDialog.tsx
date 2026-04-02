@@ -16,6 +16,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   designId: string;
   designTitle: string;
+  designTenantId?: string | null;
 }
 
 interface CustomerOption {
