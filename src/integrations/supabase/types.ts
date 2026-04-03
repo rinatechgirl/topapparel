@@ -293,119 +293,6 @@ export type Database = {
           },
         ]
       }
-      notifications: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          order_id: string | null
-          tenant_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          order_id?: string | null
-          tenant_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          order_id?: string | null
-          tenant_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          created_at: string
-          created_by: string
-          customer_id: string
-          design_id: string | null
-          id: string
-          measurement_id: string | null
-          notes: string | null
-          status: Database["public"]["Enums"]["order_status"]
-          tenant_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          customer_id: string
-          design_id?: string | null
-          id?: string
-          measurement_id?: string | null
-          notes?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          tenant_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          customer_id?: string
-          design_id?: string | null
-          id?: string
-          measurement_id?: string | null
-          notes?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          tenant_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_design_id_fkey"
-            columns: ["design_id"]
-            isOneToOne: false
-            referencedRelation: "designs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_measurement_id_fkey"
-            columns: ["measurement_id"]
-            isOneToOne: false
-            referencedRelation: "measurements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string
@@ -455,7 +342,6 @@ export type Database = {
           phone: string | null
           slug: string
           status: Database["public"]["Enums"]["tenant_status"]
-          whatsapp_phone: string | null
         }
         Insert: {
           address?: string | null
@@ -470,7 +356,6 @@ export type Database = {
           phone?: string | null
           slug: string
           status?: Database["public"]["Enums"]["tenant_status"]
-          whatsapp_phone?: string | null
         }
         Update: {
           address?: string | null
@@ -485,7 +370,6 @@ export type Database = {
           phone?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["tenant_status"]
-          whatsapp_phone?: string | null
         }
         Relationships: []
       }
@@ -536,12 +420,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "staff"
-      order_status:
-        | "pending_price_confirmation"
-        | "pending"
-        | "in_progress"
-        | "ready"
-        | "delivered"
       tenant_status: "pending" | "approved" | "suspended" | "rejected"
     }
     CompositeTypes: {
@@ -671,13 +549,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
-      order_status: [
-        "pending_price_confirmation",
-        "pending",
-        "in_progress",
-        "ready",
-        "delivered",
-      ],
       tenant_status: ["pending", "approved", "suspended", "rejected"],
     },
   },

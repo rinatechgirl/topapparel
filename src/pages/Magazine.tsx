@@ -364,17 +364,6 @@ const Magazine = () => {
                   <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                 </Button>
               </div>
-
-              {/* Order CTA */}
-              <Button
-                className="w-full h-11 mt-3 gap-2 text-sm font-semibold uppercase tracking-wider"
-                onClick={() => {
-                  setDetail(null);
-                  navigate(`/designs/${detail.id}`);
-                }}
-              >
-                Select This Design
-              </Button>
             </>
           )}
         </DialogContent>

@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import fallbackLogo from "@/assets/logo.jpeg";
-import CustomerOrderAuth from "@/components/auth/CustomerOrderAuth";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -43,7 +42,7 @@ function FullPageSpinner() {
 
 // ─── Mode 1: Branded tenant login (slug.rinasfit.com/auth) ────────────────────
 
-function TenantLogin({ slug, customerIntent }: { slug: string; customerIntent: boolean }) {
+function TenantLogin({ slug }: { slug: string }) {
   const navigate = useNavigate();
   const { tenant, loading: tenantLoading, notFound } = useTenantBySlug(slug);
 
@@ -63,9 +62,8 @@ function TenantLogin({ slug, customerIntent }: { slug: string; customerIntent: b
     if (error) {
       toast.error(error.message);
     } else {
-      const params = new URLSearchParams(window.location.search);
-      const returnTo = params.get("returnTo");
-      navigate(returnTo || "/dashboard", { replace: true });
+      // App.tsx AuthGate handles the final redirect (/dashboard or /admin)
+      navigate("/dashboard", { replace: true });
     }
   };
 
@@ -177,20 +175,6 @@ function TenantLogin({ slug, customerIntent }: { slug: string; customerIntent: b
   }
 
   const logoSrc = tenant?.logo_url ?? fallbackLogo;
-
-  if (tenant && customerIntent) {
-    const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get("returnTo") || "/designs";
-
-    return (
-      <CustomerOrderAuth
-        businessName={tenant.business_name}
-        logoSrc={logoSrc}
-        returnTo={returnTo}
-        tenantId={tenant.id}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -519,11 +503,10 @@ const Auth = () => {
 
   // Development: detect from ?tenant= query param (localhost fallback)
   const devSlug = searchParams.get("tenant");
-  const customerIntent = searchParams.get("intent") === "customer-order";
 
   const tenantSlug = subdomainSlug ?? devSlug;
 
-  if (tenantSlug) return <TenantLogin slug={tenantSlug} customerIntent={customerIntent} />;
+  if (tenantSlug) return <TenantLogin slug={tenantSlug} />;
   return <SlugDiscovery />;
 };
 

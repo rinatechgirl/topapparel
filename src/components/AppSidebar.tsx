@@ -6,7 +6,6 @@ import {
   Palette,
   FolderOpen,
   BarChart3,
-  ShoppingBag,
   Settings,
   UserCog,
   ShieldCheck,
@@ -29,7 +28,6 @@ const navItems = [
   { to: "/customers",    label: "Customers",     icon: Users           },
   { to: "/measurements", label: "Measurements",  icon: Ruler           },
   { to: "/designs",      label: "Designs",       icon: Palette         },
-  { to: "/orders",       label: "Orders",        icon: ShoppingBag     },
   { to: "/categories",   label: "Categories",    icon: FolderOpen      },
   { to: "/catalogue",    label: "Our Catalogue", icon: BookOpen        },
 ];

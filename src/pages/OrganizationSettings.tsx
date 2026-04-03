@@ -56,7 +56,6 @@ const OrganizationSettings = () => {
     address: "",
     country: "",
     description: "",
-    whatsapp_phone: "",
   });
 
   // Load tenant details
@@ -70,7 +69,6 @@ const OrganizationSettings = () => {
         address: (tenant as any).address || "",
         country: (tenant as any).country || "",
         description: (tenant as any).description || "",
-        whatsapp_phone: (tenant as any).whatsapp_phone || "",
       });
     }
   }, [tenant]);
@@ -240,7 +238,6 @@ const OrganizationSettings = () => {
         address: form.address.trim() || null,
         country: form.country.trim() || null,
         description: form.description.trim() || null,
-        whatsapp_phone: form.whatsapp_phone.trim() || null,
       } as any)
       .eq("id", tenantId);
 
@@ -505,17 +502,6 @@ const OrganizationSettings = () => {
                       onChange={(e) => setForm({ ...form, address: e.target.value })}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>WhatsApp Phone</Label>
-                  <Input
-                    placeholder="+2348012345678"
-                    value={form.whatsapp_phone}
-                    onChange={(e) => setForm({ ...form, whatsapp_phone: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Customers will see a "Chat on WhatsApp" button to negotiate pricing. Include country code.
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Description</Label>

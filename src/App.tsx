@@ -12,8 +12,6 @@ import Customers from "@/pages/Customers";
 import CustomerDetail from "@/pages/CustomerDetail";
 import Measurements from "@/pages/Measurements";
 import Designs from "@/pages/Designs";
-import DesignDetail from "@/pages/DesignDetail";
-import Orders from "@/pages/Orders";
 import Categories from "@/pages/Categories";
 import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
@@ -26,7 +24,6 @@ import StaffManagement from "@/pages/StaffManagement";
 import Landing from "@/pages/Landing";
 import Magazine from "@/pages/Magazine";
 import Catalogue from "@/pages/Catalogue";
-import PublicLayout from "@/components/PublicLayout";
 
 const queryClient = new QueryClient();
 
@@ -60,7 +57,7 @@ const ProtectedRoute = ({
  * Platform admins bypass tenant checks entirely.
  */
 const TenantGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, tenantId, tenant, isPlatformAdmin, role } = useAuth();
+  const { user, loading, tenantId, tenant, isPlatformAdmin } = useAuth();
 
   if (loading)
     return (
@@ -69,8 +66,6 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   if (!user) return <Navigate to="/auth" replace />;
-
-  if (role === "customer") return <Navigate to="/designs" replace />;
 
   // Platform admins skip all tenant checks
   if (isPlatformAdmin) return <>{children}</>;
@@ -141,23 +136,15 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
  * Redirects already-signed-in users away from the login page.
  */
 const AuthGate = () => {
-  const { user, loading, isPlatformAdmin, role } = useAuth();
-  
+  const { user, loading, isPlatformAdmin } = useAuth();
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
         Loading…
       </div>
     );
-  if (user) {
-    // Check for returnTo param to redirect back after login
-    const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get("returnTo");
-    if (returnTo) return <Navigate to={returnTo} replace />;
-    if (isPlatformAdmin) return <Navigate to="/admin" replace />;
-    if (role === "customer") return <Navigate to="/designs" replace />;
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <Auth />;
 };
 
@@ -166,7 +153,7 @@ const AuthGate = () => {
  * Redirects signed-in users straight to their dashboard.
  */
 const LandingGate = () => {
-  const { user, loading, isPlatformAdmin, role } = useAuth();
+  const { user, loading, isPlatformAdmin } = useAuth();
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground">
@@ -174,7 +161,6 @@ const LandingGate = () => {
       </div>
     );
   if (user && isPlatformAdmin) return <Navigate to="/admin" replace />;
-  if (user && role === "customer") return <Navigate to="/designs" replace />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <Landing />;
 };
@@ -197,12 +183,6 @@ const App = () => (
             {/* Public magazine and catalogue — no auth required */}
             <Route path="/magazine" element={<Magazine />} />
             <Route path="/catalogue" element={<Catalogue />} />
-
-            {/* Public design browsing — no auth required */}
-            <Route element={<PublicLayout />}>
-              <Route path="/designs" element={<Designs />} />
-              <Route path="/designs/:id" element={<DesignDetail />} />
-            </Route>
 
             {/* Business registration — open to unauthenticated users */}
             <Route
@@ -236,7 +216,8 @@ const App = () => (
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/measurements" element={<Measurements />} />
-              <Route path="/orders" element={<Orders />} />
+              <Route path="/designs" element={<Designs />} />
+              <Route path="/categories" element={<Categories />} />
               <Route
                 path="/reports"
                 element={
